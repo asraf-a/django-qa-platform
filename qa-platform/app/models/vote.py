@@ -4,8 +4,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from .base import TimeStampedModel
 
-class Vote(models.Model):
+
+class Vote(TimeStampedModel):
     UPVOTE = 1
     DOWNVOTE = -1
     VOTE_CHOICES = (
@@ -23,8 +25,6 @@ class Vote(models.Model):
     content_object = GenericForeignKey('content_type', 'object_id')
 
     value = models.SmallIntegerField(choices=VOTE_CHOICES)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']

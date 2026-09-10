@@ -4,8 +4,10 @@ from django.db import models
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 
+from .base import TimeStampedModel
 
-class Answer(models.Model):
+
+class Answer(TimeStampedModel):
     question = models.ForeignKey(
         'Question',
         on_delete=models.CASCADE,
@@ -17,8 +19,6 @@ class Answer(models.Model):
         related_name='answers'
     )
     content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     votes = GenericRelation('Vote', related_query_name='answer')
 

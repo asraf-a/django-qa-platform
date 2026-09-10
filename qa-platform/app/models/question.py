@@ -4,8 +4,10 @@ from django.db import models
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 
+from .base import TimeStampedModel
 
-class Question(models.Model):
+
+class Question(TimeStampedModel):
     title = models.CharField(max_length=255)
     description = models.TextField()
     author = models.ForeignKey(
@@ -14,8 +16,6 @@ class Question(models.Model):
         related_name='questions'
     )
     tags = models.ManyToManyField('Tag', blank=True, related_name='questions')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     votes = GenericRelation('Vote', related_query_name='question')
 

@@ -5,8 +5,10 @@ from django.db import models
 from django.db.models import Q, Sum
 from django.db.models.functions import Coalesce
 
+from .base import TimeStampedModel
 
-class Comment(models.Model):
+
+class Comment(TimeStampedModel):
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -35,9 +37,6 @@ class Comment(models.Model):
         blank=True,
         related_name='replies'
     )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     votes = GenericRelation('Vote', related_query_name='comment')
 
@@ -97,14 +96,13 @@ class Comment(models.Model):
     def downvotes_count(self):
         return self.votes.filter(value=-1).count()
 
-    def clean(self):
-        super().clean()
-
-        # 1. Self-parenting check
+    def _validate_self_parent(self):
+        """Prevent a comment from being its own parent."""
         if self.pk and self.parent_id == self.pk:
             raise ValidationError({'parent': 'A comment cannot be its own parent.'})
 
-        # 2. Circular reference check
+    def _validate_circular_reference(self):
+        """Prevent circular parent relationships by checking the parent chain."""
         if self.pk and self.parent:
             curr = self.parent
             while curr is not None:
@@ -112,11 +110,18 @@ class Comment(models.Model):
                     raise ValidationError({'parent': 'Circular parent reference detected.'})
                 curr = curr.parent
 
-        # 3. Cannot have both question and answer explicitly specified
+    def _validate_single_target(self):
+        """Ensure a comment cannot explicitly belong to both a Question and an Answer."""
         if self.question and self.answer:
             raise ValidationError('A comment cannot belong to both a Question and an Answer.')
 
-        # 4. If parent is set (reply)
+    def _validate_parent_target(self):
+        """
+        Handle reply and root-target validation:
+        - Ensure a reply's target matches its parent.
+        - Inherit the parent's Question or Answer target.
+        - Ensure a top-level comment has either a Question or an Answer.
+        """
         if self.parent:
             parent_root_target = self.parent.get_root_target()
             if parent_root_target is None:
@@ -137,9 +142,15 @@ class Comment(models.Model):
                 self.answer = self.parent.answer
                 self.question = None
         else:
-            # Top-level comment: must have either Question or Answer
             if not self.question and not self.answer:
                 raise ValidationError('A top-level comment must be associated with either a Question or an Answer.')
+
+    def clean(self):
+        super().clean()
+        self._validate_self_parent()
+        self._validate_circular_reference()
+        self._validate_single_target()
+        self._validate_parent_target()
 
     def save(self, *args, **kwargs):
         # Automatically inherit root target from parent if it is a reply
