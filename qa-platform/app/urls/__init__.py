@@ -1,9 +1,10 @@
 """URLs package for the app."""
 
 from django.urls import path
+from app.views import QuestionListView
 
 app_name = 'app'
 
 urlpatterns = [
-    # Feature URLs will be added in subsequent feature TODOs.
+    path('', QuestionListView.as_view(), name='question_list'),
 ]
