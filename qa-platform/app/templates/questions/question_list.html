@@ -35,8 +35,10 @@
 
                         <!-- Question Details -->
                         <div class="flex-1 min-w-0">
-                            <h2 class="text-lg font-semibold text-gray-900 hover:text-indigo-600 transition-colors break-words">
-                                {{ question.title }}
+                            <h2 class="text-lg font-semibold text-gray-900 break-words">
+                                <a href="{% url 'app:question_detail' question.pk %}" class="hover:text-indigo-600 transition-colors">
+                                    {{ question.title }}
+                                </a>
                             </h2>
 
                             <p class="text-sm text-gray-600 mt-2 line-clamp-2 break-words leading-relaxed">
