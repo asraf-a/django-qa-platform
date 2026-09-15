@@ -13,6 +13,14 @@ class QuestionForm(forms.ModelForm):
         model = Question
         fields = ['title', 'description']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            tag_names = self.instance.tags.values_list('name', flat=True)
+            tags_str = ', '.join(tag_names)
+            self.fields['tags'].initial = tags_str
+            self.initial['tags'] = tags_str
+
     def save(self, commit=True):
         question = super().save(commit=commit)
         tags_data = self.cleaned_data.get('tags', '')
