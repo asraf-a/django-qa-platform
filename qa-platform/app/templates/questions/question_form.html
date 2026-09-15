@@ -46,7 +46,15 @@
                     Title <span class="text-red-500">*</span>
                 </label>
                 <p class="text-xs text-gray-500 mb-2">Be specific and imagine you're asking a question to another person.</p>
-                {{ form.title }}
+                <input
+                    type="text"
+                    name="title"
+                    id="{{ form.title.id_for_label }}"
+                    value="{{ form.title.value|default:'' }}"
+                    placeholder="What is your programming question? Be specific."
+                    class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-900 placeholder-gray-400 transition-colors"
+                    required
+                >
                 {% if form.title.errors %}
                     <div class="mt-1.5 text-xs text-red-600 font-medium">
                         {% for error in form.title.errors %}
@@ -62,7 +70,14 @@
                     Description <span class="text-red-500">*</span>
                 </label>
                 <p class="text-xs text-gray-500 mb-2">The body of your question and any relevant context or details.</p>
-                {{ form.description }}
+                <textarea
+                    name="description"
+                    id="{{ form.description.id_for_label }}"
+                    rows="8"
+                    placeholder="Include all the details someone would need to answer your question, such as context, expected behavior, and code snippets."
+                    class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-900 placeholder-gray-400 transition-colors font-sans"
+                    required
+                >{{ form.description.value|default:'' }}</textarea>
                 {% if form.description.errors %}
                     <div class="mt-1.5 text-xs text-red-600 font-medium">
                         {% for error in form.description.errors %}
@@ -78,7 +93,14 @@
                     Tags
                 </label>
                 <p class="text-xs text-gray-500 mb-2">{{ form.tags.help_text }}</p>
-                {{ form.tags }}
+                <input
+                    type="text"
+                    name="tags"
+                    id="{{ form.tags.id_for_label }}"
+                    value="{{ form.tags.value|default:'' }}"
+                    placeholder="e.g. python, django, web development"
+                    class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-900 placeholder-gray-400 transition-colors"
+                >
                 {% if form.tags.errors %}
                     <div class="mt-1.5 text-xs text-red-600 font-medium">
                         {% for error in form.tags.errors %}

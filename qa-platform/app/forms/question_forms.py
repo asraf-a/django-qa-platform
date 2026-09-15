@@ -7,32 +7,11 @@ class QuestionForm(forms.ModelForm):
     tags = forms.CharField(
         required=False,
         help_text="Separate tags with commas (e.g. python, django, web development)",
-        widget=forms.TextInput(
-            attrs={
-                'class': 'w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-900 placeholder-gray-400 transition-colors',
-                'placeholder': 'e.g. python, django, web development',
-            }
-        )
     )
 
     class Meta:
         model = Question
         fields = ['title', 'description']
-        widgets = {
-            'title': forms.TextInput(
-                attrs={
-                    'class': 'w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-900 placeholder-gray-400 transition-colors',
-                    'placeholder': 'What is your programming question? Be specific.',
-                }
-            ),
-            'description': forms.Textarea(
-                attrs={
-                    'rows': 8,
-                    'class': 'w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-900 placeholder-gray-400 transition-colors font-sans',
-                    'placeholder': 'Include all the details someone would need to answer your question, such as context, expected behavior, and code snippets.',
-                }
-            ),
-        }
 
     def save(self, commit=True):
         question = super().save(commit=commit)
