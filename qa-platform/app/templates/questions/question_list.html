@@ -10,9 +10,17 @@
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">All Questions</h1>
             <p class="text-sm text-gray-500 mt-1">Explore questions asked by the community</p>
         </div>
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
-            {% if is_paginated %}{{ paginator.count }}{% else %}{{ questions|length }}{% endif %} question{{ paginator.count|default:questions|length|pluralize }}
-        </span>
+        <div class="flex items-center gap-3">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                {% if is_paginated %}{{ paginator.count }}{% else %}{{ questions|length }}{% endif %} question{{ paginator.count|default:questions|length|pluralize }}
+            </span>
+            <a href="{% url 'app:question_create' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Ask Question
+            </a>
+        </div>
     </div>
 
     <!-- Questions Feed -->
