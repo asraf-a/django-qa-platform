@@ -1,7 +1,8 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch
 from django.urls import reverse
-from django.views.generic import CreateView, DetailView, ListView
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from app.forms import QuestionForm
 from app.models import Answer, Question
@@ -41,6 +42,22 @@ class QuestionCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('app:question_detail', kwargs={'pk': self.object.pk})
+
+
+class QuestionUpdateView(LoginRequiredMixin, UpdateView):
+    model = Question
+    form_class = QuestionForm
+    template_name = 'questions/question_edit.html'
+    context_object_name = 'question'
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        if obj.author != self.request.user:
+            raise PermissionDenied("You do not have permission to edit this question.")
+        return obj
 
     def get_success_url(self):
         return reverse('app:question_detail', kwargs={'pk': self.object.pk})
