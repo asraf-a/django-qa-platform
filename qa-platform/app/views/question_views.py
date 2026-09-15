@@ -7,6 +7,7 @@ class QuestionListView(ListView):
     model = Question
     template_name = 'questions/question_list.html'
     context_object_name = 'questions'
+    paginate_by = 10
 
     def get_queryset(self):
         return Question.objects.select_related('author').prefetch_related('tags', 'answers', 'votes').all()

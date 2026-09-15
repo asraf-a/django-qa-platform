@@ -88,3 +88,37 @@ class QuestionListViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         questions = list(response.context['questions'])
         self.assertEqual(questions, [q2, q1])
+
+    def test_question_list_pagination_first_page(self):
+        for i in range(15):
+            Question.objects.create(
+                title=f'Question {i}',
+                description=f'Description {i}',
+                author=self.user
+            )
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['is_paginated'])
+        self.assertEqual(len(response.context['questions']), 10)
+        self.assertEqual(response.context['paginator'].count, 15)
+        self.assertEqual(response.context['page_obj'].number, 1)
+        self.assertContains(response, 'Page 1 of 2')
+        self.assertContains(response, 'Next')
+
+    def test_question_list_pagination_second_page(self):
+        for i in range(15):
+            Question.objects.create(
+                title=f'Question {i}',
+                description=f'Description {i}',
+                author=self.user
+            )
+
+        response = self.client.get(f'{self.url}?page=2')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['is_paginated'])
+        self.assertEqual(len(response.context['questions']), 5)
+        self.assertEqual(response.context['page_obj'].number, 2)
+        self.assertContains(response, 'Page 2 of 2')
+        self.assertContains(response, 'Previous')
+
