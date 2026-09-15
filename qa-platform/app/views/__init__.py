@@ -1,5 +1,6 @@
 """Views package placeholder."""
 from .auth_views import RegisterView, UserLoginView, UserLogoutView
+from .mixins import AuthorRequiredMixin
 from .question_views import (
     QuestionCreateView,
     QuestionDetailView,
@@ -8,6 +9,7 @@ from .question_views import (
 )
  
 __all__ = [
+    'AuthorRequiredMixin',
     'QuestionCreateView',
     'QuestionDetailView',
     'QuestionListView',
