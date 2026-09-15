@@ -113,3 +113,8 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/stable/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Authentication redirects
+LOGIN_URL = 'app:login'
+LOGIN_REDIRECT_URL = 'app:question_list'
+LOGOUT_REDIRECT_URL = 'app:question_list'

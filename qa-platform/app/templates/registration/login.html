@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Create Account - Q&A Platform{% endblock %}
+{% block title %}Sign In - Q&A Platform{% endblock %}
 
 {% block content %}
 <main class="max-w-md mx-auto px-4 sm:px-6 py-12 w-full flex-1 flex flex-col justify-center">
@@ -8,12 +8,16 @@
     <div class="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm">
         <!-- Header -->
         <div class="text-center mb-8">
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Create your account</h1>
-            <p class="text-sm text-gray-500 mt-2">Join our Q&A community to ask questions and share knowledge.</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Sign in to your account</h1>
+            <p class="text-sm text-gray-500 mt-2">Welcome back! Please enter your details to sign in.</p>
         </div>
 
         <form method="post" novalidate class="space-y-5">
             {% csrf_token %}
+
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
 
             <!-- Non-field Errors -->
             {% if form.non_field_errors %}
@@ -41,7 +45,7 @@
                     name="username"
                     id="{{ form.username.id_for_label }}"
                     value="{{ form.username.value|default:'' }}"
-                    placeholder="Choose a username"
+                    placeholder="Enter your username"
                     autocomplete="username"
                     class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-900 placeholder-gray-400 transition-colors"
                     required
@@ -55,73 +59,23 @@
                 {% endif %}
             </div>
 
-            <!-- Email Field -->
-            <div>
-                <label for="{{ form.email.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-1">
-                    Email address <span class="text-red-500">*</span>
-                </label>
-                <input
-                    type="email"
-                    name="email"
-                    id="{{ form.email.id_for_label }}"
-                    value="{{ form.email.value|default:'' }}"
-                    placeholder="name@example.com"
-                    autocomplete="email"
-                    class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-900 placeholder-gray-400 transition-colors"
-                    required
-                >
-                {% if form.email.errors %}
-                    <div class="mt-1.5 text-xs text-red-600 font-medium space-y-0.5">
-                        {% for error in form.email.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-
             <!-- Password Field -->
             <div>
-                <label for="{{ form.password1.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-1">
+                <label for="{{ form.password.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-1">
                     Password <span class="text-red-500">*</span>
                 </label>
                 <input
                     type="password"
-                    name="password1"
-                    id="{{ form.password1.id_for_label }}"
-                    placeholder="Create a password"
-                    autocomplete="new-password"
+                    name="password"
+                    id="{{ form.password.id_for_label }}"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
                     class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-900 placeholder-gray-400 transition-colors"
                     required
                 >
-                {% if form.password1.help_text %}
-                    <p class="mt-1.5 text-xs text-gray-500">{{ form.password1.help_text }}</p>
-                {% endif %}
-                {% if form.password1.errors %}
+                {% if form.password.errors %}
                     <div class="mt-1.5 text-xs text-red-600 font-medium space-y-0.5">
-                        {% for error in form.password1.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-
-            <!-- Confirm Password Field -->
-            <div>
-                <label for="{{ form.password2.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-1">
-                    Confirm password <span class="text-red-500">*</span>
-                </label>
-                <input
-                    type="password"
-                    name="password2"
-                    id="{{ form.password2.id_for_label }}"
-                    placeholder="Confirm your password"
-                    autocomplete="new-password"
-                    class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-900 placeholder-gray-400 transition-colors"
-                    required
-                >
-                {% if form.password2.errors %}
-                    <div class="mt-1.5 text-xs text-red-600 font-medium space-y-0.5">
-                        {% for error in form.password2.errors %}
+                        {% for error in form.password.errors %}
                             <p>{{ error }}</p>
                         {% endfor %}
                     </div>
@@ -134,17 +88,17 @@
                     type="submit"
                     class="w-full py-2.5 px-4 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                    Create Account
+                    Sign in
                 </button>
             </div>
         </form>
 
-        <!-- Footer / Link to Sign In -->
+        <!-- Footer / Link to Register -->
         <div class="mt-6 pt-6 border-t border-gray-100 text-center">
             <p class="text-sm text-gray-600">
-                Already have an account?
-                <a href="{% url 'app:login' %}" class="font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
-                    Sign in
+                Don't have an account?
+                <a href="{% url 'app:register' %}" class="font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+                    Sign up
                 </a>
             </p>
         </div>
