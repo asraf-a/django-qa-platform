@@ -99,30 +99,24 @@
                                     {{ answer.content }}
                                 </div>
 
-                                <!-- Answer Author Metadata & Actions -->
-                                <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 gap-2">
+                                <!-- Answer Author Metadata -->
+                                <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-end text-xs text-gray-500 gap-2">
                                     {% if user.is_authenticated and user == answer.author %}
-                                        <a href="{% url 'app:answer_edit' answer.pk %}" class="inline-flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-indigo-600 bg-gray-50 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-200 px-2.5 py-1 rounded-lg transition-colors">
+                                        <a href="{% url 'app:answer_edit' answer.pk %}" class="inline-flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-indigo-600 bg-gray-50 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-200 px-2.5 py-1 rounded-lg transition-colors mr-auto">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
                                             Edit
                                         </a>
-                                    {% else %}
-                                        <div></div>
                                     {% endif %}
-
-                                    <div class="flex items-center gap-2">
-                                        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-gray-700 font-semibold text-[10px] uppercase">
-                                            {{ answer.author.username|slice:":1" }}
-                                        </span>
-                                        <span>
-                                            Answered by <span class="font-medium text-gray-800">{{ answer.author.username }}</span>
-                                            <time datetime="{{ answer.created_at|date:'c' }}" class="text-gray-400">· {{ answer.created_at|timesince }} ago</time>
-                                        </span>
-                                    </div>
+                                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-gray-700 font-semibold text-[10px] uppercase">
+                                        {{ answer.author.username|slice:":1" }}
+                                    </span>
+                                    <span>
+                                        Answered by <span class="font-medium text-gray-800">{{ answer.author.username }}</span>
+                                        <time datetime="{{ answer.created_at|date:'c' }}" class="text-gray-400">· {{ answer.created_at|timesince }} ago</time>
+                                    </span>
                                 </div>
-
                             </div>
                         </div>
                     </article>
