@@ -3,7 +3,7 @@ from django.db.models import Prefetch
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-from app.forms import QuestionForm
+from app.forms import AnswerForm, QuestionForm
 from app.models import Answer, Question
 from .mixins import AuthorRequiredMixin
 
@@ -32,6 +32,12 @@ class QuestionDetailView(DetailView):
                 queryset=Answer.objects.select_related('author').prefetch_related('votes')
             )
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if 'answer_form' not in context:
+            context['answer_form'] = AnswerForm()
+        return context
 
 
 class QuestionCreateView(LoginRequiredMixin, CreateView):

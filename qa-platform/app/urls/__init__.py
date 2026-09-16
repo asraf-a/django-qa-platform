@@ -1,5 +1,6 @@
 from django.urls import path
 from app.views import (
+    AnswerCreateView,
     QuestionCreateView,
     QuestionDeleteView,
     QuestionDetailView,
@@ -20,5 +21,6 @@ urlpatterns = [
     path('questions/ask/', QuestionCreateView.as_view(), name='question_create'),
     path('questions/<int:pk>/edit/', QuestionUpdateView.as_view(), name='question_edit'),
     path('questions/<int:pk>/delete/', QuestionDeleteView.as_view(), name='question_delete'),
+    path('questions/<int:pk>/answers/', AnswerCreateView.as_view(), name='answer_create'),
     path('questions/<int:pk>/', QuestionDetailView.as_view(), name='question_detail'),
 ]
