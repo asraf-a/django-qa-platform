@@ -1,7 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Prefetch
-from django.urls import reverse
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.urls import reverse, reverse_lazy
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from app.forms import QuestionForm
 from app.models import Answer, Question
@@ -55,3 +55,10 @@ class QuestionUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse('app:question_detail', kwargs={'pk': self.object.pk})
+
+
+class QuestionDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
+    model = Question
+    template_name = 'questions/question_confirm_delete.html'
+    context_object_name = 'question'
+    success_url = reverse_lazy('app:question_list')

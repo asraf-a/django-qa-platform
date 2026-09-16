@@ -1,6 +1,7 @@
 from django.urls import path
 from app.views import (
     QuestionCreateView,
+    QuestionDeleteView,
     QuestionDetailView,
     QuestionListView,
     QuestionUpdateView,
@@ -18,5 +19,6 @@ urlpatterns = [
     path('accounts/logout/', UserLogoutView.as_view(), name='logout'),
     path('questions/ask/', QuestionCreateView.as_view(), name='question_create'),
     path('questions/<int:pk>/edit/', QuestionUpdateView.as_view(), name='question_edit'),
+    path('questions/<int:pk>/delete/', QuestionDeleteView.as_view(), name='question_delete'),
     path('questions/<int:pk>/', QuestionDetailView.as_view(), name='question_detail'),
 ]

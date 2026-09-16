@@ -3,6 +3,7 @@ from .auth_views import RegisterView, UserLoginView, UserLogoutView
 from .mixins import AuthorRequiredMixin
 from .question_views import (
     QuestionCreateView,
+    QuestionDeleteView,
     QuestionDetailView,
     QuestionListView,
     QuestionUpdateView,
@@ -11,6 +12,7 @@ from .question_views import (
 __all__ = [
     'AuthorRequiredMixin',
     'QuestionCreateView',
+    'QuestionDeleteView',
     'QuestionDetailView',
     'QuestionListView',
     'QuestionUpdateView',
