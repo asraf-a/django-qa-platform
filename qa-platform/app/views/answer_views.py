@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.views.generic import CreateView, UpdateView
+from django.views.generic import CreateView, DeleteView, UpdateView
 
 from app.forms import AnswerForm
 from app.models import Answer, Question
@@ -56,3 +56,15 @@ class AnswerUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse('app:question_detail', kwargs={'pk': self.object.question.pk})
+
+
+class AnswerDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
+    model = Answer
+    template_name = 'answers/answer_confirm_delete.html'
+    context_object_name = 'answer'
+
+    def get_queryset(self):
+        return Answer.objects.select_related('question', 'author')
+
+    def get_success_url(self):
+        return reverse('app:question_detail', kwargs={'pk': self.object.question_id})
