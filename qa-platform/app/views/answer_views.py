@@ -2,10 +2,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.views.generic import CreateView
+from django.views.generic import CreateView, UpdateView
 
 from app.forms import AnswerForm
 from app.models import Answer, Question
+from .mixins import AuthorRequiredMixin
 
 
 class AnswerCreateView(LoginRequiredMixin, CreateView):
@@ -42,3 +43,16 @@ class AnswerCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse('app:question_detail', kwargs={'pk': self.kwargs['pk']})
+
+
+class AnswerUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
+    model = Answer
+    form_class = AnswerForm
+    template_name = 'answers/answer_edit.html'
+    context_object_name = 'answer'
+
+    def get_queryset(self):
+        return Answer.objects.select_related('question', 'author')
+
+    def get_success_url(self):
+        return reverse('app:question_detail', kwargs={'pk': self.object.question.pk})

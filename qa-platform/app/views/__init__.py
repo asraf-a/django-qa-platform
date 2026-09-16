@@ -1,4 +1,4 @@
-from .answer_views import AnswerCreateView
+from .answer_views import AnswerCreateView, AnswerUpdateView
 from .auth_views import RegisterView, UserLoginView, UserLogoutView
 from .mixins import AuthorRequiredMixin
 from .question_views import (
@@ -11,6 +11,7 @@ from .question_views import (
 
 __all__ = [
     'AnswerCreateView',
+    'AnswerUpdateView',
     'AuthorRequiredMixin',
     'QuestionCreateView',
     'QuestionDeleteView',
