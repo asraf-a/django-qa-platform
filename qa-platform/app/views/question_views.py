@@ -100,16 +100,16 @@ class QuestionVoteView(LoginRequiredMixin, SingleObjectMixin, View):
 
     def post(self, request, *args, **kwargs):
         question = self.get_object()
-        vote_value = self.get_vote_value(request)
+        vote_value = self._get_vote_value(request)
         if vote_value is not None:
-            self.apply_vote(request.user, question, vote_value)
+            self._apply_vote(request.user, question, vote_value)
         return redirect('app:question_detail', pk=question.pk)
 
     def get(self, request, *args, **kwargs):
         question = self.get_object()
         return redirect('app:question_detail', pk=question.pk)
 
-    def get_vote_value(self, request):
+    def _get_vote_value(self, request):
         try:
             value = int(request.POST.get('value', 0))
             if value in (Vote.UPVOTE, Vote.DOWNVOTE):
@@ -118,7 +118,7 @@ class QuestionVoteView(LoginRequiredMixin, SingleObjectMixin, View):
             pass
         return None
 
-    def apply_vote(self, user, question, value):
+    def _apply_vote(self, user, question, value):
         content_type = ContentType.objects.get_for_model(Question)
         vote = Vote.objects.filter(
             user=user,
