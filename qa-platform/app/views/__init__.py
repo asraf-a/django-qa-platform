@@ -3,6 +3,7 @@ from .auth_views import RegisterView, UserLoginView, UserLogoutView
 from .comment_views import (
     AnswerCommentCreateView,
     BaseCommentCreateView,
+    CommentDeleteView,
     CommentUpdateView,
     QuestionCommentCreateView,
 )
@@ -22,6 +23,7 @@ __all__ = [
     'AnswerUpdateView',
     'AuthorRequiredMixin',
     'BaseCommentCreateView',
+    'CommentDeleteView',
     'CommentUpdateView',
     'QuestionCommentCreateView',
     'QuestionCreateView',
