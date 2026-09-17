@@ -1,0 +1,26 @@
+{% if user.is_authenticated and user == question.author %}
+    <!-- Inline Question Edit Form (Basecamp-style) -->
+    <form id="question-edit-form" method="post" action="{% url 'app:question_edit' question.pk %}" class="hidden space-y-4">
+        {% csrf_token %}
+        <div>
+            <label for="id_question_title" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Question Title</label>
+            <input type="text" id="id_question_title" name="title" required value="{{ question.title }}" class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium text-gray-900 shadow-sm" placeholder="Title">
+        </div>
+        <div>
+            <label for="id_question_description" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Description</label>
+            <textarea id="id_question_description" name="description" rows="6" required class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-900 shadow-sm resize-y" placeholder="Describe your question in detail...">{{ question.description }}</textarea>
+        </div>
+        <div>
+            <label for="id_question_tags" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Tags (comma-separated)</label>
+            <input type="text" id="id_question_tags" name="tags" value="{% for tag in question.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}" class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-900 shadow-sm" placeholder="e.g. python, django, api">
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+            <button type="button" onclick="cancelQuestionEdit()" class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors cursor-pointer">
+                Save Changes
+            </button>
+        </div>
+    </form>
+{% endif %}
