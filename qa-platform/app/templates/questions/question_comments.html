@@ -1,0 +1,102 @@
+<!-- Question Comments Section -->
+<section id="question-comments" class="mt-6 pt-4 border-t border-gray-100" aria-label="Question comments">
+    {% if question.comments.all %}
+        <div class="space-y-2">
+            {% for comment in question.comments.all %}
+                {% if comment.is_root_comment %}
+                    <div class="text-xs text-gray-700 py-2 border-b border-gray-50 last:border-0">
+                        <div class="flex items-baseline justify-between gap-2">
+                            <span class="break-words leading-relaxed">{{ comment.content }}</span>
+                            <span class="text-[11px] text-gray-400 shrink-0">
+                                <span class="text-indigo-600 font-medium">{{ comment.author.username }}</span>
+                                <time datetime="{{ comment.created_at|date:'c' }}">· {{ comment.created_at|timesince }} ago</time>
+                            </span>
+                        </div>
+
+                        <!-- Nested Replies -->
+                        {% if comment.replies.all %}
+                            <div class="mt-2 ml-4 pl-3 border-l-2 border-indigo-100 space-y-1.5">
+                                {% for reply in comment.replies.all %}
+                                    <div class="flex items-baseline justify-between gap-2 text-xs text-gray-600">
+                                        <span class="break-words leading-relaxed">{{ reply.content }}</span>
+                                        <span class="text-[11px] text-gray-400 shrink-0">
+                                            <span class="text-indigo-600 font-medium">{{ reply.author.username }}</span>
+                                            <time datetime="{{ reply.created_at|date:'c' }}">· {{ reply.created_at|timesince }} ago</time>
+                                        </span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if user.is_authenticated %}
+                            <div class="mt-1">
+                                <button
+                                    type="button"
+                                    onclick="document.getElementById('reply-form-{{ comment.pk }}').classList.toggle('hidden')"
+                                    class="text-[11px] text-gray-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                                >
+                                    Reply
+                                </button>
+                                <form id="reply-form-{{ comment.pk }}" method="post" action="{% url 'app:question_comment_create' question.pk %}" class="hidden mt-2 space-y-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="parent" value="{{ comment.pk }}">
+                                    <textarea
+                                        name="content"
+                                        rows="2"
+                                        required
+                                        placeholder="Reply to {{ comment.author.username }}..."
+                                        class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-400 resize-y"
+                                    ></textarea>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            onclick="document.getElementById('reply-form-{{ comment.pk }}').classList.add('hidden')"
+                                            class="px-2.5 py-1 text-xs text-gray-500 hover:text-gray-700 bg-white border border-gray-200 rounded-md transition-colors cursor-pointer"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            class="px-3 py-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow-xs transition-colors cursor-pointer"
+                                        >
+                                            Reply
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Add Question Comment Form / Login Prompt -->
+    {% if user.is_authenticated %}
+        <form method="post" action="{% url 'app:question_comment_create' question.pk %}" class="mt-3 space-y-2">
+            {% csrf_token %}
+            <div>
+                <textarea
+                    name="content"
+                    id="id_question_comment_content"
+                    rows="2"
+                    required
+                    placeholder="Use comments to ask for clarification or add notes..."
+                    class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-400 resize-y shadow-xs"
+                ></textarea>
+            </div>
+            <div class="flex items-center justify-end">
+                <button
+                    type="submit"
+                    class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 transition-colors shadow-xs cursor-pointer"
+                >
+                    Add Comment
+                </button>
+            </div>
+        </form>
+    {% else %}
+        <div class="mt-3 text-xs text-gray-500">
+            <a href="{% url 'app:login' %}?next={{ request.path }}" class="font-medium text-indigo-600 hover:text-indigo-800 transition-colors">Log in</a> to add a comment.
+        </div>
+    {% endif %}
+</section>
