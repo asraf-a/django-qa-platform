@@ -1,10 +1,13 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Prefetch
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from app.forms import AnswerCommentForm, AnswerForm, QuestionCommentForm, QuestionForm
-from app.models import Answer, Comment, Question
+from app.models import Answer, Comment, Question, Vote
 from .mixins import AuthorRequiredMixin
 
 
@@ -51,6 +54,12 @@ class QuestionDetailView(DetailView):
             context['comment_form'] = QuestionCommentForm()
         if 'answer_comment_form' not in context:
             context['answer_comment_form'] = AnswerCommentForm()
+        user_vote = None
+        if self.request.user.is_authenticated:
+            vote = self.object.votes.filter(user=self.request.user).first()
+            if vote:
+                user_vote = vote.value
+        context['user_vote'] = user_vote
         return context
 
 
@@ -83,3 +92,41 @@ class QuestionDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
     template_name = 'questions/question_confirm_delete.html'
     context_object_name = 'question'
     success_url = reverse_lazy('app:question_list')
+
+
+class QuestionVoteView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        question = get_object_or_404(Question, pk=pk)
+        try:
+            value = int(request.POST.get('value', 0))
+        except (ValueError, TypeError):
+            return redirect('app:question_detail', pk=question.pk)
+
+        if value not in (Vote.UPVOTE, Vote.DOWNVOTE):
+            return redirect('app:question_detail', pk=question.pk)
+
+        content_type = ContentType.objects.get_for_model(Question)
+        vote = Vote.objects.filter(
+            user=request.user,
+            content_type=content_type,
+            object_id=question.pk
+        ).first()
+
+        if vote:
+            if vote.value == value:
+                vote.delete()
+            else:
+                vote.value = value
+                vote.save(update_fields=['value', 'updated_at'])
+        else:
+            Vote.objects.create(
+                user=request.user,
+                content_type=content_type,
+                object_id=question.pk,
+                value=value
+            )
+
+        return redirect('app:question_detail', pk=question.pk)
+
+    def get(self, request, pk):
+        return redirect('app:question_detail', pk=pk)
