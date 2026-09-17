@@ -15,6 +15,7 @@ from .question_views import (
     QuestionDetailView,
     QuestionListView,
     QuestionUpdateView,
+    QuestionVoteView,
 )
 
 __all__ = [
@@ -33,6 +34,7 @@ __all__ = [
     'QuestionDetailView',
     'QuestionListView',
     'QuestionUpdateView',
+    'QuestionVoteView',
     'RegisterView',
     'UserLoginView',
     'UserLogoutView',
