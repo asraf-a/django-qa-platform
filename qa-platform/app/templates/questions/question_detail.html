@@ -336,5 +336,33 @@
         }
         toggleAnswerEdit(id);
     }
+
+    function toggleCommentEdit(id) {
+        const content = document.getElementById('comment-content-' + id);
+        const form = document.getElementById('comment-edit-form-' + id);
+        const actions = document.getElementById('comment-actions-' + id);
+        if (content && form) {
+            const isHidden = form.classList.contains('hidden');
+            content.classList.toggle('hidden', isHidden);
+            form.classList.toggle('hidden', !isHidden);
+            if (actions) {
+                actions.classList.toggle('hidden', isHidden);
+            }
+            if (isHidden) {
+                const textarea = form.querySelector('textarea');
+                if (textarea) {
+                    textarea.focus();
+                }
+            }
+        }
+    }
+
+    function cancelCommentEdit(id) {
+        const form = document.getElementById('comment-edit-form-' + id);
+        if (form) {
+            form.reset();
+        }
+        toggleCommentEdit(id);
+    }
 </script>
 {% endblock %}

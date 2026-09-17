@@ -24,3 +24,9 @@ class QuestionCommentForm(BaseCommentForm):
 
 class AnswerCommentForm(BaseCommentForm):
     pass
+
+
+class CommentEditForm(BaseCommentForm):
+    class Meta(BaseCommentForm.Meta):
+        fields = ['content']
+        widgets = {}
