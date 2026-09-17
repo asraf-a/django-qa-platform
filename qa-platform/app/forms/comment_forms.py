@@ -3,7 +3,7 @@ from django import forms
 from app.models import Comment
 
 
-class QuestionCommentForm(forms.ModelForm):
+class BaseCommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ['content', 'parent']
@@ -16,3 +16,11 @@ class QuestionCommentForm(forms.ModelForm):
         if not content:
             raise forms.ValidationError("Comment content cannot be empty.")
         return content
+
+
+class QuestionCommentForm(BaseCommentForm):
+    pass
+
+
+class AnswerCommentForm(BaseCommentForm):
+    pass
