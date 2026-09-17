@@ -3,8 +3,8 @@ from django.db.models import Prefetch
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-from app.forms import AnswerForm, QuestionForm
-from app.models import Answer, Question
+from app.forms import AnswerForm, QuestionCommentForm, QuestionForm
+from app.models import Answer, Comment, Question
 from .mixins import AuthorRequiredMixin
 
 
@@ -28,6 +28,10 @@ class QuestionDetailView(DetailView):
             'tags',
             'votes',
             Prefetch(
+                'comments',
+                queryset=Comment.objects.select_related('author').prefetch_related('replies__author')
+            ),
+            Prefetch(
                 'answers',
                 queryset=Answer.objects.select_related('author').prefetch_related('votes')
             )
@@ -37,6 +41,8 @@ class QuestionDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         if 'answer_form' not in context:
             context['answer_form'] = AnswerForm()
+        if 'comment_form' not in context:
+            context['comment_form'] = QuestionCommentForm()
         return context
 
 
