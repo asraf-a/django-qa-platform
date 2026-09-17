@@ -98,6 +98,17 @@ class QuestionDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
 class QuestionVoteView(LoginRequiredMixin, SingleObjectMixin, View):
     model = Question
 
+    def post(self, request, *args, **kwargs):
+        question = self.get_object()
+        vote_value = self.get_vote_value(request)
+        if vote_value is not None:
+            self.apply_vote(request.user, question, vote_value)
+        return redirect('app:question_detail', pk=question.pk)
+
+    def get(self, request, *args, **kwargs):
+        question = self.get_object()
+        return redirect('app:question_detail', pk=question.pk)
+
     def get_vote_value(self, request):
         try:
             value = int(request.POST.get('value', 0))
@@ -128,14 +139,3 @@ class QuestionVoteView(LoginRequiredMixin, SingleObjectMixin, View):
                 object_id=question.pk,
                 value=value
             )
-
-    def post(self, request, *args, **kwargs):
-        question = self.get_object()
-        vote_value = self.get_vote_value(request)
-        if vote_value is not None:
-            self.apply_vote(request.user, question, vote_value)
-        return redirect('app:question_detail', pk=question.pk)
-
-    def get(self, request, *args, **kwargs):
-        question = self.get_object()
-        return redirect('app:question_detail', pk=question.pk)
