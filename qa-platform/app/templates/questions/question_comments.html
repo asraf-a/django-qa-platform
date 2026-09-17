@@ -6,30 +6,90 @@
                 {% if comment.is_root_comment %}
                     <div class="text-xs text-gray-700 py-2 border-b border-gray-50 last:border-0">
                         <div class="flex items-baseline justify-between gap-2">
-                            <span class="break-words leading-relaxed">{{ comment.content }}</span>
+                            <span id="comment-content-{{ comment.pk }}" class="break-words leading-relaxed">{{ comment.content }}</span>
                             <span class="text-[11px] text-gray-400 shrink-0">
                                 <span class="text-indigo-600 font-medium">{{ comment.author.username }}</span>
                                 <time datetime="{{ comment.created_at|date:'c' }}">· {{ comment.created_at|timesince }} ago</time>
                             </span>
                         </div>
 
+                        {% if user == comment.author %}
+                            <form id="comment-edit-form-{{ comment.pk }}" method="post" action="{% url 'app:comment_edit' comment.pk %}" class="hidden mt-2 space-y-2">
+                                {% csrf_token %}
+                                <textarea
+                                    name="content"
+                                    rows="2"
+                                    required
+                                    placeholder="Edit your comment..."
+                                    class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-400 resize-y"
+                                >{{ comment.content }}</textarea>
+                                <div class="flex items-center justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onclick="cancelCommentEdit('{{ comment.pk }}')"
+                                        class="px-2.5 py-1 text-xs text-gray-500 hover:text-gray-700 bg-white border border-gray-200 rounded-md transition-colors cursor-pointer"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        class="px-3 py-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow-xs transition-colors cursor-pointer"
+                                    >
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </form>
+                        {% endif %}
+
                         <!-- Nested Replies -->
                         {% if comment.replies.all %}
                             <div class="mt-2 ml-4 pl-3 border-l-2 border-indigo-100 space-y-1.5">
                                 {% for reply in comment.replies.all %}
-                                    <div class="flex items-baseline justify-between gap-2 text-xs text-gray-600">
-                                        <span class="break-words leading-relaxed">{{ reply.content }}</span>
-                                        <span class="text-[11px] text-gray-400 shrink-0">
-                                            <span class="text-indigo-600 font-medium">{{ reply.author.username }}</span>
-                                            <time datetime="{{ reply.created_at|date:'c' }}">· {{ reply.created_at|timesince }} ago</time>
-                                        </span>
+                                    <div class="text-xs text-gray-600">
+                                        <div class="flex items-baseline justify-between gap-2">
+                                            <span id="comment-content-{{ reply.pk }}" class="break-words leading-relaxed">{{ reply.content }}</span>
+                                            <span class="text-[11px] text-gray-400 shrink-0">
+                                                <span class="text-indigo-600 font-medium">{{ reply.author.username }}</span>
+                                                <time datetime="{{ reply.created_at|date:'c' }}">· {{ reply.created_at|timesince }} ago</time>
+                                                {% if user.is_authenticated and user == reply.author %}
+                                                    · <button type="button" onclick="toggleCommentEdit('{{ reply.pk }}')" class="hover:text-indigo-600 transition-colors cursor-pointer">Edit</button>
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                        {% if user.is_authenticated and user == reply.author %}
+                                            <form id="comment-edit-form-{{ reply.pk }}" method="post" action="{% url 'app:comment_edit' reply.pk %}" class="hidden mt-1.5 space-y-2">
+                                                {% csrf_token %}
+                                                <textarea
+                                                    name="content"
+                                                    rows="2"
+                                                    required
+                                                    placeholder="Edit your reply..."
+                                                    class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-400 resize-y"
+                                                >{{ reply.content }}</textarea>
+                                                <div class="flex items-center justify-end gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onclick="cancelCommentEdit('{{ reply.pk }}')"
+                                                        class="px-2.5 py-1 text-xs text-gray-500 hover:text-gray-700 bg-white border border-gray-200 rounded-md transition-colors cursor-pointer"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        type="submit"
+                                                        class="px-3 py-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow-xs transition-colors cursor-pointer"
+                                                    >
+                                                        Save Changes
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        {% endif %}
                                     </div>
                                 {% endfor %}
                             </div>
                         {% endif %}
 
                         {% if user.is_authenticated %}
-                            <div class="mt-1">
+                            <div id="comment-actions-{{ comment.pk }}" class="mt-1">
                                 <button
                                     type="button"
                                     onclick="document.getElementById('reply-form-{{ comment.pk }}').classList.toggle('hidden')"
@@ -37,6 +97,16 @@
                                 >
                                     Reply
                                 </button>
+                                {% if user == comment.author %}
+                                    <span class="text-[11px] text-gray-300">·</span>
+                                    <button
+                                        type="button"
+                                        onclick="toggleCommentEdit('{{ comment.pk }}')"
+                                        class="text-[11px] text-gray-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                                    >
+                                        Edit
+                                    </button>
+                                {% endif %}
                                 <form id="reply-form-{{ comment.pk }}" method="post" action="{% url 'app:question_comment_create' question.pk %}" class="hidden mt-2 space-y-2">
                                     {% csrf_token %}
                                     <input type="hidden" name="parent" value="{{ comment.pk }}">

@@ -2,10 +2,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.views.generic import CreateView
+from django.views.generic import CreateView, UpdateView
 
-from app.forms import AnswerCommentForm, QuestionCommentForm
+from app.forms import AnswerCommentForm, CommentEditForm, QuestionCommentForm
 from app.models import Answer, Comment, Question
+from .mixins import AuthorRequiredMixin
 
 
 class BaseCommentCreateView(LoginRequiredMixin, CreateView):
@@ -114,3 +115,35 @@ class AnswerCommentCreateView(BaseCommentCreateView):
                 answer_comment_form=form,
             )
         )
+
+
+class CommentUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
+    model = Comment
+    form_class = CommentEditForm
+    template_name = 'comments/comment_edit.html'
+    context_object_name = 'comment'
+
+    def get_queryset(self):
+        return Comment.objects.select_related('author', 'question', 'answer__question', 'parent')
+
+    def get_question(self):
+        comment = getattr(self, 'object', None) or self.get_object()
+        if comment.question:
+            return comment.question
+        if comment.answer:
+            return comment.answer.question
+        root = comment.get_root_target()
+        if isinstance(root, Question):
+            return root
+        elif isinstance(root, Answer):
+            return root.question
+        return None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['question'] = self.get_question()
+        return context
+
+    def get_success_url(self):
+        question = self.get_question()
+        return reverse('app:question_detail', kwargs={'pk': question.pk})
