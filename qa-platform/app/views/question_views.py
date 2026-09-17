@@ -98,19 +98,19 @@ class QuestionDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
 class QuestionVoteView(LoginRequiredMixin, SingleObjectMixin, View):
     model = Question
 
-    def post(self, request, *args, **kwargs):
-        question = self.get_object()
+    def get_vote_value(self, request):
         try:
             value = int(request.POST.get('value', 0))
+            if value in (Vote.UPVOTE, Vote.DOWNVOTE):
+                return value
         except (ValueError, TypeError):
-            return redirect('app:question_detail', pk=question.pk)
+            pass
+        return None
 
-        if value not in (Vote.UPVOTE, Vote.DOWNVOTE):
-            return redirect('app:question_detail', pk=question.pk)
-
+    def apply_vote(self, user, question, value):
         content_type = ContentType.objects.get_for_model(Question)
         vote = Vote.objects.filter(
-            user=request.user,
+            user=user,
             content_type=content_type,
             object_id=question.pk
         ).first()
@@ -123,12 +123,17 @@ class QuestionVoteView(LoginRequiredMixin, SingleObjectMixin, View):
                 vote.save(update_fields=['value', 'updated_at'])
         else:
             Vote.objects.create(
-                user=request.user,
+                user=user,
                 content_type=content_type,
                 object_id=question.pk,
                 value=value
             )
 
+    def post(self, request, *args, **kwargs):
+        question = self.get_object()
+        vote_value = self.get_vote_value(request)
+        if vote_value is not None:
+            self.apply_vote(request.user, question, vote_value)
         return redirect('app:question_detail', pk=question.pk)
 
     def get(self, request, *args, **kwargs):
