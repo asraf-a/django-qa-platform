@@ -3,7 +3,7 @@ from django import forms
 from app.models import Comment
 
 
-class QuestionCommentForm(forms.ModelForm):
+class BaseCommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ['content', 'parent']
@@ -18,16 +18,9 @@ class QuestionCommentForm(forms.ModelForm):
         return content
 
 
-class AnswerCommentForm(forms.ModelForm):
-    class Meta:
-        model = Comment
-        fields = ['content', 'parent']
-        widgets = {
-            'parent': forms.HiddenInput(),
-        }
+class QuestionCommentForm(BaseCommentForm):
+    pass
 
-    def clean_content(self):
-        content = self.cleaned_data.get('content', '').strip()
-        if not content:
-            raise forms.ValidationError("Comment content cannot be empty.")
-        return content
+
+class AnswerCommentForm(BaseCommentForm):
+    pass

@@ -8,12 +8,19 @@ from app.forms import AnswerCommentForm, QuestionCommentForm
 from app.models import Answer, Comment, Question
 
 
-class QuestionCommentCreateView(LoginRequiredMixin, CreateView):
+class BaseCommentCreateView(LoginRequiredMixin, CreateView):
     model = Comment
-    form_class = QuestionCommentForm
     template_name = 'questions/question_detail.html'
+    target_attr = None  # 'question' or 'answer'
 
-    def get_question(self):
+
+    def get_target(self):
+        raise NotImplementedError
+
+    def get_question_id(self, target):
+        raise NotImplementedError
+
+    def get_full_question(self, question_id):
         return get_object_or_404(
             Question.objects.select_related('author').prefetch_related(
                 'tags',
@@ -33,93 +40,77 @@ class QuestionCommentCreateView(LoginRequiredMixin, CreateView):
                     )
                 )
             ),
-            pk=self.kwargs['pk']
+            pk=question_id
         )
 
     def get(self, request, *args, **kwargs):
-        return redirect('app:question_detail', pk=self.kwargs['pk'])
+        target = self.get_target()
+        return redirect('app:question_detail', pk=self.get_question_id(target))
+
+    def setup_comment_instance(self, form, target):
+        setattr(form.instance, self.target_attr, target)
+        if self.target_attr == 'answer':
+            form.instance.question = None
+        form.instance.author = self.request.user
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        form.instance.question = get_object_or_404(Question, pk=self.kwargs['pk'])
-        form.instance.author = self.request.user
+        self.setup_comment_instance(form, self.get_target())
         return form
 
     def form_valid(self, form):
-        form.instance.question = get_object_or_404(Question, pk=self.kwargs['pk'])
-        form.instance.author = self.request.user
+        self.setup_comment_instance(form, self.get_target())
         return super().form_valid(form)
 
+    def get_success_url(self):
+        target = self.get_target()
+        return reverse('app:question_detail', kwargs={'pk': self.get_question_id(target)})
+
+
+class QuestionCommentCreateView(BaseCommentCreateView):
+    form_class = QuestionCommentForm
+    target_attr = 'question'
+
+    def get_target(self):
+        return get_object_or_404(Question, pk=self.kwargs['pk'])
+
+    def get_question_id(self, target):
+        return target.pk
+
+    def get_question(self):
+        return self.get_full_question(self.kwargs['pk'])
+
     def form_invalid(self, form):
-        question = self.get_question()
         return self.render_to_response(
-            self.get_context_data(question=question, comment_form=form)
+            self.get_context_data(
+                question=self.get_full_question(self.kwargs['pk']),
+                comment_form=form
+            )
         )
 
-    def get_success_url(self):
-        return reverse('app:question_detail', kwargs={'pk': self.kwargs['pk']})
 
-
-class AnswerCommentCreateView(LoginRequiredMixin, CreateView):
-    model = Comment
+class AnswerCommentCreateView(BaseCommentCreateView):
     form_class = AnswerCommentForm
-    template_name = 'questions/question_detail.html'
+    target_attr = 'answer'
 
-    def get_answer(self):
+    def get_target(self):
         return get_object_or_404(
             Answer.objects.select_related('question'),
             pk=self.kwargs['pk']
         )
 
-    def get(self, request, *args, **kwargs):
-        answer = self.get_answer()
-        return redirect('app:question_detail', pk=answer.question_id)
+    def get_question_id(self, target):
+        return target.question_id
 
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        answer = self.get_answer()
-        form.instance.answer = answer
-        form.instance.question = None
-        form.instance.author = self.request.user
-        return form
-
-    def form_valid(self, form):
-        answer = self.get_answer()
-        form.instance.answer = answer
-        form.instance.question = None
-        form.instance.author = self.request.user
-        return super().form_valid(form)
+    def get_answer(self):
+        return self.get_target()
 
     def form_invalid(self, form):
-        answer = self.get_answer()
-        question = get_object_or_404(
-            Question.objects.select_related('author').prefetch_related(
-                'tags',
-                'votes',
-                Prefetch(
-                    'comments',
-                    queryset=Comment.objects.select_related('author').prefetch_related('replies__author')
-                ),
-                Prefetch(
-                    'answers',
-                    queryset=Answer.objects.select_related('author').prefetch_related(
-                        'votes',
-                        Prefetch(
-                            'comments',
-                            queryset=Comment.objects.select_related('author').prefetch_related('replies__author')
-                        )
-                    )
-                )
-            ),
-            pk=answer.question_id
-        )
+        target = self.get_target()
         return self.render_to_response(
             self.get_context_data(
-                question=question,
-                failed_answer_id=answer.pk,
+                question=self.get_full_question(target.question_id),
+                failed_answer_id=target.pk,
                 answer_comment_form=form,
             )
         )
-
-    def get_success_url(self):
-        return reverse('app:question_detail', kwargs={'pk': self.object.answer.question_id})
