@@ -117,10 +117,9 @@ class AnswerCommentCreateView(BaseCommentCreateView):
         )
 
 
-class CommentUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
+class CommentQuestionResolutionMixin:
+    """Provides parent Question resolution, context data, and success URL for comment views."""
     model = Comment
-    form_class = CommentEditForm
-    template_name = 'comments/comment_edit.html'
     context_object_name = 'comment'
 
     def get_queryset(self):
@@ -143,42 +142,20 @@ class CommentUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['question'] = self.get_question()
         return context
-
-    def get_success_url(self):
-        question = self.get_question()
-        return reverse('app:question_detail', kwargs={'pk': question.pk})
-
-
-class CommentDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
-    model = Comment
-    template_name = 'comments/comment_confirm_delete.html'
-    context_object_name = 'comment'
-
-    def get_queryset(self):
-        return Comment.objects.select_related('author', 'question', 'answer__question', 'parent')
-
-    def get_question(self):
-        comment = getattr(self, 'object', None) or self.get_object()
-        if comment.question:
-            return comment.question
-        if comment.answer:
-            return comment.answer.question
-        root = comment.get_root_target()
-        if isinstance(root, Question):
-            return root
-        elif isinstance(root, Answer):
-            return root.question
-        return None
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['question'] = self.get_question()
-        return context
-
-    def form_valid(self, form):
-        self.question = self.get_question()
-        return super().form_valid(form)
 
     def get_success_url(self):
         question = getattr(self, 'question', None) or self.get_question()
         return reverse('app:question_detail', kwargs={'pk': question.pk})
+
+
+class CommentUpdateView(LoginRequiredMixin, AuthorRequiredMixin, CommentQuestionResolutionMixin, UpdateView):
+    form_class = CommentEditForm
+    template_name = 'comments/comment_edit.html'
+
+
+class CommentDeleteView(LoginRequiredMixin, AuthorRequiredMixin, CommentQuestionResolutionMixin, DeleteView):
+    template_name = 'comments/comment_confirm_delete.html'
+
+    def form_valid(self, form):
+        self.question = self.get_question()
+        return super().form_valid(form)

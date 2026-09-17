@@ -4,6 +4,7 @@ from .comment_views import (
     AnswerCommentCreateView,
     BaseCommentCreateView,
     CommentDeleteView,
+    CommentQuestionResolutionMixin,
     CommentUpdateView,
     QuestionCommentCreateView,
 )
@@ -24,6 +25,7 @@ __all__ = [
     'AuthorRequiredMixin',
     'BaseCommentCreateView',
     'CommentDeleteView',
+    'CommentQuestionResolutionMixin',
     'CommentUpdateView',
     'QuestionCommentCreateView',
     'QuestionCreateView',
