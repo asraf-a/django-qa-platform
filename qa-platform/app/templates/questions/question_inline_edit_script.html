@@ -1,0 +1,25 @@
+<script>
+    function toggleQuestionEdit() {
+        const display = document.getElementById('question-display');
+        const form = document.getElementById('question-edit-form');
+        if (display && form) {
+            const isHidden = form.classList.contains('hidden');
+            display.classList.toggle('hidden', isHidden);
+            form.classList.toggle('hidden', !isHidden);
+            if (isHidden) {
+                const titleInput = form.querySelector('input[name="title"]');
+                if (titleInput) {
+                    titleInput.focus();
+                }
+            }
+        }
+    }
+
+    function cancelQuestionEdit() {
+        const form = document.getElementById('question-edit-form');
+        if (form) {
+            form.reset();
+        }
+        toggleQuestionEdit();
+    }
+</script>
