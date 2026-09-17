@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from django.views.generic.detail import SingleObjectMixin
 
 from app.forms import AnswerCommentForm, AnswerForm, QuestionCommentForm, QuestionForm
 from app.models import Answer, Comment, Question, Vote
@@ -94,9 +95,11 @@ class QuestionDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
     success_url = reverse_lazy('app:question_list')
 
 
-class QuestionVoteView(LoginRequiredMixin, View):
-    def post(self, request, pk):
-        question = get_object_or_404(Question, pk=pk)
+class QuestionVoteView(LoginRequiredMixin, SingleObjectMixin, View):
+    model = Question
+
+    def post(self, request, *args, **kwargs):
+        question = self.get_object()
         try:
             value = int(request.POST.get('value', 0))
         except (ValueError, TypeError):
@@ -128,5 +131,6 @@ class QuestionVoteView(LoginRequiredMixin, View):
 
         return redirect('app:question_detail', pk=question.pk)
 
-    def get(self, request, pk):
-        return redirect('app:question_detail', pk=pk)
+    def get(self, request, *args, **kwargs):
+        question = self.get_object()
+        return redirect('app:question_detail', pk=question.pk)
