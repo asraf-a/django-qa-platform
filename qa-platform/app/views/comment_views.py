@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.views.generic import CreateView, UpdateView
+from django.views.generic import CreateView, DeleteView, UpdateView
 
 from app.forms import AnswerCommentForm, CommentEditForm, QuestionCommentForm
 from app.models import Answer, Comment, Question
@@ -117,10 +117,9 @@ class AnswerCommentCreateView(BaseCommentCreateView):
         )
 
 
-class CommentUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
+class CommentQuestionResolutionMixin:
+    """Provides parent Question resolution, context data, and success URL for comment views."""
     model = Comment
-    form_class = CommentEditForm
-    template_name = 'comments/comment_edit.html'
     context_object_name = 'comment'
 
     def get_queryset(self):
@@ -145,5 +144,18 @@ class CommentUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
         return context
 
     def get_success_url(self):
-        question = self.get_question()
+        question = getattr(self, 'question', None) or self.get_question()
         return reverse('app:question_detail', kwargs={'pk': question.pk})
+
+
+class CommentUpdateView(LoginRequiredMixin, AuthorRequiredMixin, CommentQuestionResolutionMixin, UpdateView):
+    form_class = CommentEditForm
+    template_name = 'comments/comment_edit.html'
+
+
+class CommentDeleteView(LoginRequiredMixin, AuthorRequiredMixin, CommentQuestionResolutionMixin, DeleteView):
+    template_name = 'comments/comment_confirm_delete.html'
+
+    def form_valid(self, form):
+        self.question = self.get_question()
+        return super().form_valid(form)

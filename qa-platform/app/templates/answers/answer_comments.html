@@ -53,6 +53,42 @@
                                                 <time datetime="{{ reply.created_at|date:'c' }}">· {{ reply.created_at|timesince }} ago</time>
                                                 {% if user.is_authenticated and user == reply.author %}
                                                     · <button type="button" onclick="toggleCommentEdit('{{ reply.pk }}')" class="hover:text-indigo-600 transition-colors cursor-pointer">Edit</button>
+                                                    · <button type="button" onclick="document.getElementById('delete-comment-modal-{{ reply.pk }}').showModal()" class="hover:text-red-600 transition-colors cursor-pointer">Delete</button>
+
+                                                    <!-- Reply Delete Confirmation Modal -->
+                                                    <dialog id="delete-comment-modal-{{ reply.pk }}" class="fixed inset-0 m-auto p-0 rounded-2xl shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-xs border border-gray-200 max-w-md w-full bg-white text-left" onclick="if (event.target === this) this.close()">
+                                                        <div class="p-6">
+                                                            <div class="flex items-center gap-3 pb-4 border-b border-gray-100">
+                                                                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                    </svg>
+                                                                </div>
+                                                                <div>
+                                                                    <h3 class="text-base font-bold text-gray-900">Delete Comment</h3>
+                                                                    <p class="text-xs text-gray-500">This action cannot be undone.</p>
+                                                                </div>
+                                                            </div>
+
+                                                            <p class="text-sm text-gray-600 my-4">
+                                                                Are you sure you want to delete this comment?
+                                                            </p>
+
+                                                            <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs text-gray-600 line-clamp-3 mb-5">
+                                                                {{ reply.content }}
+                                                            </div>
+
+                                                            <form method="post" action="{% url 'app:comment_delete' reply.pk %}" class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                                                                {% csrf_token %}
+                                                                <button type="button" onclick="document.getElementById('delete-comment-modal-{{ reply.pk }}').close()" class="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                                                                    Cancel
+                                                                </button>
+                                                                <button type="submit" class="px-4 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-xs transition-colors cursor-pointer">
+                                                                    Delete
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </dialog>
                                                 {% endif %}
                                             </span>
                                         </div>
@@ -106,6 +142,49 @@
                                     >
                                         Edit
                                     </button>
+                                    <span class="text-[11px] text-gray-300">·</span>
+                                    <button
+                                        type="button"
+                                        onclick="document.getElementById('delete-comment-modal-{{ comment.pk }}').showModal()"
+                                        class="text-[11px] text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                                    >
+                                        Delete
+                                    </button>
+
+                                    <!-- Root Comment Delete Confirmation Modal -->
+                                    <dialog id="delete-comment-modal-{{ comment.pk }}" class="fixed inset-0 m-auto p-0 rounded-2xl shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-xs border border-gray-200 max-w-md w-full bg-white text-left" onclick="if (event.target === this) this.close()">
+                                        <div class="p-6">
+                                            <div class="flex items-center gap-3 pb-4 border-b border-gray-100">
+                                                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <h3 class="text-base font-bold text-gray-900">Delete Comment</h3>
+                                                    <p class="text-xs text-gray-500">This action cannot be undone.</p>
+                                                </div>
+                                            </div>
+
+                                            <p class="text-sm text-gray-600 my-4">
+                                                Are you sure you want to delete this comment?
+                                            </p>
+
+                                            <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs text-gray-600 line-clamp-3 mb-5">
+                                                {{ comment.content }}
+                                            </div>
+
+                                            <form method="post" action="{% url 'app:comment_delete' comment.pk %}" class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                                                {% csrf_token %}
+                                                <button type="button" onclick="document.getElementById('delete-comment-modal-{{ comment.pk }}').close()" class="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                                                    Cancel
+                                                </button>
+                                                <button type="submit" class="px-4 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-xs transition-colors cursor-pointer">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </dialog>
                                 {% endif %}
                                 <form id="reply-form-{{ comment.pk }}" method="post" action="{% url 'app:answer_comment_create' answer.pk %}" class="hidden mt-2 space-y-2">
                                     {% csrf_token %}
