@@ -1,5 +1,6 @@
 from django.urls import path
 from app.views import (
+    AnswerCommentCreateView,
     AnswerCreateView,
     AnswerDeleteView,
     AnswerUpdateView,
@@ -28,5 +29,6 @@ urlpatterns = [
     path('questions/<int:pk>/answers/', AnswerCreateView.as_view(), name='answer_create'),
     path('answers/<int:pk>/edit/', AnswerUpdateView.as_view(), name='answer_edit'),
     path('answers/<int:pk>/delete/', AnswerDeleteView.as_view(), name='answer_delete'),
+    path('answers/<int:pk>/comments/', AnswerCommentCreateView.as_view(), name='answer_comment_create'),
     path('questions/<int:pk>/', QuestionDetailView.as_view(), name='question_detail'),
 ]

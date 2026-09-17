@@ -16,3 +16,18 @@ class QuestionCommentForm(forms.ModelForm):
         if not content:
             raise forms.ValidationError("Comment content cannot be empty.")
         return content
+
+
+class AnswerCommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['content', 'parent']
+        widgets = {
+            'parent': forms.HiddenInput(),
+        }
+
+    def clean_content(self):
+        content = self.cleaned_data.get('content', '').strip()
+        if not content:
+            raise forms.ValidationError("Comment content cannot be empty.")
+        return content

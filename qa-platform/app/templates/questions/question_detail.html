@@ -216,6 +216,7 @@
                                         <time datetime="{{ answer.created_at|date:'c' }}" class="text-gray-400">· {{ answer.created_at|timesince }} ago</time>
                                     </span>
                                 </div>
+                                {% include "answers/answer_comments.html" %}
                             </div>
                         </div>
                     </article>
