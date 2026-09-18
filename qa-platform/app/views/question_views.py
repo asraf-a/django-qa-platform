@@ -1,15 +1,12 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Prefetch
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
-from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
-from django.views.generic.detail import SingleObjectMixin
 
 from app.forms import AnswerCommentForm, AnswerForm, QuestionCommentForm, QuestionForm
-from app.models import Answer, Comment, Question, Vote
-from .mixins import AuthorRequiredMixin
+from app.models import Answer, Comment, Question
+from .mixins import AuthorRequiredMixin, BaseVoteView
 
 
 class QuestionListView(ListView):
@@ -102,47 +99,9 @@ class QuestionDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
     success_url = reverse_lazy('app:question_list')
 
 
-class QuestionVoteView(LoginRequiredMixin, SingleObjectMixin, View):
+class QuestionVoteView(BaseVoteView):
     model = Question
 
-    def post(self, request, *args, **kwargs):
-        question = self.get_object()
-        vote_value = self._get_vote_value(request)
-        if vote_value is not None:
-            self._apply_vote(request.user, question, vote_value)
-        return redirect('app:question_detail', pk=question.pk)
+    def _get_redirect_url(self, question):
+        return reverse('app:question_detail', kwargs={'pk': question.pk})
 
-    def get(self, request, *args, **kwargs):
-        question = self.get_object()
-        return redirect('app:question_detail', pk=question.pk)
-
-    def _get_vote_value(self, request):
-        try:
-            value = int(request.POST.get('value', 0))
-            if value in (Vote.UPVOTE, Vote.DOWNVOTE):
-                return value
-        except (ValueError, TypeError):
-            pass
-        return None
-
-    def _apply_vote(self, user, question, value):
-        content_type = ContentType.objects.get_for_model(Question)
-        vote = Vote.objects.filter(
-            user=user,
-            content_type=content_type,
-            object_id=question.pk
-        ).first()
-
-        if vote:
-            if vote.value == value:
-                vote.delete()
-            else:
-                vote.value = value
-                vote.save(update_fields=['value', 'updated_at'])
-        else:
-            Vote.objects.create(
-                user=user,
-                content_type=content_type,
-                object_id=question.pk,
-                value=value
-            )
