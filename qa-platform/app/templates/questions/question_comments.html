@@ -4,12 +4,15 @@
         <div class="space-y-2">
             {% for comment in question.comments.all %}
                 {% if comment.is_root_comment %}
-                    <div class="text-xs text-gray-700 py-2 border-b border-gray-50 last:border-0">
+                    <div id="comment-{{ comment.pk }}" class="scroll-mt-20 text-xs text-gray-700 py-2 border-b border-gray-50 last:border-0">
                         <div class="flex items-baseline justify-between gap-2">
                             <span id="comment-content-{{ comment.pk }}" class="break-words leading-relaxed">{{ comment.content }}</span>
-                            <span class="text-[11px] text-gray-400 shrink-0">
-                                <span class="text-indigo-600 font-medium">{{ comment.author.username }}</span>
-                                <time datetime="{{ comment.created_at|date:'c' }}">· {{ comment.created_at|timesince }} ago</time>
+                            <span class="text-[11px] text-gray-400 shrink-0 inline-flex items-center gap-2">
+                                {% include "comments/comment_vote_buttons.html" with comment=comment %}
+                                <span>
+                                    <span class="text-indigo-600 font-medium">{{ comment.author.username }}</span>
+                                    <time datetime="{{ comment.created_at|date:'c' }}">· {{ comment.created_at|timesince }} ago</time>
+                                </span>
                             </span>
                         </div>
 
@@ -45,12 +48,15 @@
                         {% if comment.replies.all %}
                             <div class="mt-2 ml-4 pl-3 border-l-2 border-indigo-100 space-y-1.5">
                                 {% for reply in comment.replies.all %}
-                                    <div class="text-xs text-gray-600">
+                                    <div id="comment-{{ reply.pk }}" class="scroll-mt-20 text-xs text-gray-600">
                                         <div class="flex items-baseline justify-between gap-2">
                                             <span id="comment-content-{{ reply.pk }}" class="break-words leading-relaxed">{{ reply.content }}</span>
-                                            <span class="text-[11px] text-gray-400 shrink-0">
-                                                <span class="text-indigo-600 font-medium">{{ reply.author.username }}</span>
-                                                <time datetime="{{ reply.created_at|date:'c' }}">· {{ reply.created_at|timesince }} ago</time>
+                                            <span class="text-[11px] text-gray-400 shrink-0 inline-flex items-center gap-2">
+                                                {% include "comments/comment_vote_buttons.html" with comment=reply %}
+                                                <span>
+                                                    <span class="text-indigo-600 font-medium">{{ reply.author.username }}</span>
+                                                    <time datetime="{{ reply.created_at|date:'c' }}">· {{ reply.created_at|timesince }} ago</time>
+                                                </span>
                                                 {% if user.is_authenticated and user == reply.author %}
                                                     · <button type="button" onclick="toggleCommentEdit('{{ reply.pk }}')" class="hover:text-indigo-600 transition-colors cursor-pointer">Edit</button>
                                                     · <button type="button" onclick="document.getElementById('delete-comment-modal-{{ reply.pk }}').showModal()" class="hover:text-red-600 transition-colors cursor-pointer">Delete</button>

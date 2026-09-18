@@ -25,21 +25,23 @@ class QuestionDetailView(DetailView):
     context_object_name = 'question'
 
     def get_queryset(self):
+        comment_prefetch = Prefetch(
+            'comments',
+            queryset=Comment.objects.select_related('author').prefetch_related(
+                'votes',
+                'replies__author',
+                'replies__votes'
+            )
+        )
         return Question.objects.select_related('author').prefetch_related(
             'tags',
             'votes',
-            Prefetch(
-                'comments',
-                queryset=Comment.objects.select_related('author').prefetch_related('replies__author')
-            ),
+            comment_prefetch,
             Prefetch(
                 'answers',
                 queryset=Answer.objects.select_related('author').prefetch_related(
                     'votes',
-                    Prefetch(
-                        'comments',
-                        queryset=Comment.objects.select_related('author').prefetch_related('replies__author')
-                    )
+                    comment_prefetch
                 )
             )
         )
@@ -52,19 +54,31 @@ class QuestionDetailView(DetailView):
             context['comment_form'] = QuestionCommentForm()
         if 'answer_comment_form' not in context:
             context['answer_comment_form'] = AnswerCommentForm()
-        user_vote = None
-        if self.request.user.is_authenticated:
-            user_id = self.request.user.id
-            user_vote = next(
-                (v.value for v in self.object.votes.all() if v.user_id == user_id),
-                None
+
+        user_id = self.request.user.id if self.request.user.is_authenticated else None
+
+        def attach_user_vote(item):
+            item.user_vote = (
+                next((v.value for v in item.votes.all() if v.user_id == user_id), None)
+                if user_id
+                else None
             )
-            for answer in self.object.answers.all():
-                answer.user_vote = next(
-                    (v.value for v in answer.votes.all() if v.user_id == user_id),
-                    None
-                )
-        context['user_vote'] = user_vote
+
+        attach_user_vote(self.object)
+        context['user_vote'] = self.object.user_vote
+
+        for answer in self.object.answers.all():
+            attach_user_vote(answer)
+            for comment in answer.comments.all():
+                attach_user_vote(comment)
+                for reply in comment.replies.all():
+                    attach_user_vote(reply)
+
+        for comment in self.object.comments.all():
+            attach_user_vote(comment)
+            for reply in comment.replies.all():
+                attach_user_vote(reply)
+
         return context
 
 
