@@ -11,6 +11,7 @@ from .comment_views import (
     CommentDeleteView,
     CommentQuestionResolutionMixin,
     CommentUpdateView,
+    CommentVoteView,
     QuestionCommentCreateView,
 )
 from .mixins import AuthorRequiredMixin, BaseVoteView
@@ -35,6 +36,7 @@ __all__ = [
     'CommentDeleteView',
     'CommentQuestionResolutionMixin',
     'CommentUpdateView',
+    'CommentVoteView',
     'QuestionCommentCreateView',
     'QuestionCreateView',
     'QuestionDeleteView',

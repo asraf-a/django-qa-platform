@@ -6,7 +6,7 @@ from django.views.generic import CreateView, DeleteView, UpdateView
 
 from app.forms import AnswerCommentForm, CommentEditForm, QuestionCommentForm
 from app.models import Answer, Comment, Question
-from .mixins import AuthorRequiredMixin
+from .mixins import AuthorRequiredMixin, BaseVoteView
 
 
 class BaseCommentCreateView(LoginRequiredMixin, CreateView):
@@ -159,3 +159,27 @@ class CommentDeleteView(LoginRequiredMixin, AuthorRequiredMixin, CommentQuestion
     def form_valid(self, form):
         self.question = self.get_question()
         return super().form_valid(form)
+
+
+class CommentVoteView(BaseVoteView):
+    model = Comment
+
+    def get_queryset(self):
+        return Comment.objects.select_related('question', 'answer__question', 'parent')
+
+    def _get_redirect_url(self, comment):
+        question = self._resolve_question(comment)
+        detail_url = reverse('app:question_detail', kwargs={'pk': question.pk})
+        return f"{detail_url}#comment-{comment.pk}"
+
+    def _resolve_question(self, comment):
+        if comment.question_id:
+            return comment.question
+        if comment.answer_id:
+            return comment.answer.question
+        root = comment.get_root_target()
+        if isinstance(root, Question):
+            return root
+        elif isinstance(root, Answer):
+            return root.question
+        return None

@@ -7,6 +7,7 @@ from app.views import (
     AnswerVoteView,
     CommentDeleteView,
     CommentUpdateView,
+    CommentVoteView,
     QuestionCommentCreateView,
     QuestionCreateView,
     QuestionDeleteView,
@@ -38,5 +39,6 @@ urlpatterns = [
     path('answers/<int:pk>/comments/', AnswerCommentCreateView.as_view(), name='answer_comment_create'),
     path('comments/<int:pk>/edit/', CommentUpdateView.as_view(), name='comment_edit'),
     path('comments/<int:pk>/delete/', CommentDeleteView.as_view(), name='comment_delete'),
+    path('comments/<int:pk>/vote/', CommentVoteView.as_view(), name='comment_vote'),
     path('questions/<int:pk>/', QuestionDetailView.as_view(), name='question_detail'),
 ]
