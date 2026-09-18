@@ -1,4 +1,9 @@
-from .answer_views import AnswerCreateView, AnswerDeleteView, AnswerUpdateView
+from .answer_views import (
+    AnswerCreateView,
+    AnswerDeleteView,
+    AnswerUpdateView,
+    AnswerVoteView,
+)
 from .auth_views import RegisterView, UserLoginView, UserLogoutView
 from .comment_views import (
     AnswerCommentCreateView,
@@ -23,6 +28,7 @@ __all__ = [
     'AnswerCreateView',
     'AnswerDeleteView',
     'AnswerUpdateView',
+    'AnswerVoteView',
     'AuthorRequiredMixin',
     'BaseCommentCreateView',
     'CommentDeleteView',

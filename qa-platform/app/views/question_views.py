@@ -57,9 +57,16 @@ class QuestionDetailView(DetailView):
             context['answer_comment_form'] = AnswerCommentForm()
         user_vote = None
         if self.request.user.is_authenticated:
-            vote = self.object.votes.filter(user=self.request.user).first()
-            if vote:
-                user_vote = vote.value
+            user_id = self.request.user.id
+            user_vote = next(
+                (v.value for v in self.object.votes.all() if v.user_id == user_id),
+                None
+            )
+            for answer in self.object.answers.all():
+                answer.user_vote = next(
+                    (v.value for v in answer.votes.all() if v.user_id == user_id),
+                    None
+                )
         context['user_vote'] = user_vote
         return context
 
