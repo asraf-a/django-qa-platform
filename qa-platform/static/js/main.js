@@ -5,10 +5,10 @@
  */
 function registerVoteWidget() {
     if (typeof Alpine !== 'undefined') {
-        Alpine.data('voteWidget', ({ action, upvotesCount, downvotesCount, userVote, isComment = false }) => ({
-            action: action,
-            upvotesCount: Number(upvotesCount),
-            downvotesCount: Number(downvotesCount),
+        Alpine.data('voteWidget', ({ action, upvotes, downvotes, userVote, isComment = false }) => ({
+            action,
+            upvotes: Number(upvotes),
+            downvotes: Number(downvotes),
             userVote: userVote !== null && userVote !== undefined ? Number(userVote) : null,
             loading: false,
 
@@ -72,17 +72,8 @@ function registerVoteWidget() {
 
                     const data = await response.json();
                     this.userVote = data.user_vote;
-                    this.upvotesCount = data.upvotes_count;
-                    this.downvotesCount = data.downvotes_count;
-
-                    window.dispatchEvent(new CustomEvent('vote-updated', {
-                        detail: {
-                            action: this.action,
-                            upvotesCount: data.upvotes_count,
-                            downvotesCount: data.downvotes_count,
-                            userVote: data.user_vote
-                        }
-                    }));
+                    this.upvotes = data.upvotes_count;
+                    this.downvotes = data.downvotes_count;
                 } catch (err) {
                     console.error('Error submitting vote:', err);
                 } finally {
