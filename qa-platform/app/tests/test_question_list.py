@@ -3,6 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from django.urls import reverse
 from django.views.generic import ListView
+from django_filters.views import FilterView
 
 from app.models import Answer, Question, Tag, Vote
 from app.views import QuestionListView
@@ -16,7 +17,7 @@ class QuestionListViewTest(TestCase):
         self.url = reverse('app:question_list')
 
     def test_view_is_class_based(self):
-        self.assertTrue(issubclass(QuestionListView, ListView))
+        self.assertTrue(issubclass(QuestionListView, (ListView, FilterView)))
 
     def test_question_list_status_code_by_name(self):
         response = self.client.get(self.url)
@@ -252,6 +253,11 @@ class QuestionListViewTest(TestCase):
         # Explicit ?sort=newest
         res_newest = self.client.get(f'{self.url}?sort=newest')
         self.assertEqual(list(res_newest.context['questions']), [q2, q1])
+
+        # Invalid sort falls back to newest
+        res_invalid = self.client.get(f'{self.url}?sort=invalid')
+        self.assertEqual(list(res_invalid.context['questions']), [q2, q1])
+        self.assertEqual(res_invalid.context['current_sort'], 'newest')
 
     def test_question_list_sort_most_voted(self):
         ct = ContentType.objects.get_for_model(Question)
