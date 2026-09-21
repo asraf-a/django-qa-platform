@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -6,13 +7,14 @@ from django.views.generic import CreateView, DeleteView, UpdateView
 
 from app.forms import AnswerForm
 from app.models import Answer, Question
-from .mixins import AuthorRequiredMixin, BaseVoteView
+from .mixins import AuthorRequiredMixin, BaseVoteView, DeleteSuccessMessageMixin
 
 
-class AnswerCreateView(LoginRequiredMixin, CreateView):
+class AnswerCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Answer
     form_class = AnswerForm
     template_name = 'questions/question_detail.html'
+    success_message = "Answer posted successfully."
 
     def get_question(self):
         return get_object_or_404(
@@ -45,11 +47,12 @@ class AnswerCreateView(LoginRequiredMixin, CreateView):
         return reverse('app:question_detail', kwargs={'pk': self.kwargs['pk']})
 
 
-class AnswerUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
+class AnswerUpdateView(LoginRequiredMixin, AuthorRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Answer
     form_class = AnswerForm
     template_name = 'answers/answer_edit.html'
     context_object_name = 'answer'
+    success_message = "Answer updated successfully."
 
     def get_queryset(self):
         return Answer.objects.select_related('question', 'author')
@@ -58,10 +61,11 @@ class AnswerUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
         return reverse('app:question_detail', kwargs={'pk': self.object.question.pk})
 
 
-class AnswerDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
+class AnswerDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteSuccessMessageMixin, DeleteView):
     model = Answer
     template_name = 'answers/answer_confirm_delete.html'
     context_object_name = 'answer'
+    success_message = "Answer deleted successfully."
 
     def get_queryset(self):
         return Answer.objects.select_related('question', 'author')

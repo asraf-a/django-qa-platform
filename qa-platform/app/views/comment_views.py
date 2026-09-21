@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -6,13 +7,14 @@ from django.views.generic import CreateView, DeleteView, UpdateView
 
 from app.forms import AnswerCommentForm, CommentEditForm, QuestionCommentForm
 from app.models import Answer, Comment, Question
-from .mixins import AuthorRequiredMixin, BaseVoteView
+from .mixins import AuthorRequiredMixin, BaseVoteView, DeleteSuccessMessageMixin
 
 
-class BaseCommentCreateView(LoginRequiredMixin, CreateView):
+class BaseCommentCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Comment
     template_name = 'questions/question_detail.html'
     target_attr = None  # 'question' or 'answer'
+    success_message = "Comment added successfully."
 
 
     def get_target(self):
@@ -148,13 +150,15 @@ class CommentQuestionResolutionMixin:
         return reverse('app:question_detail', kwargs={'pk': question.pk})
 
 
-class CommentUpdateView(LoginRequiredMixin, AuthorRequiredMixin, CommentQuestionResolutionMixin, UpdateView):
+class CommentUpdateView(LoginRequiredMixin, AuthorRequiredMixin, SuccessMessageMixin, CommentQuestionResolutionMixin, UpdateView):
     form_class = CommentEditForm
     template_name = 'comments/comment_edit.html'
+    success_message = "Comment updated successfully."
 
 
-class CommentDeleteView(LoginRequiredMixin, AuthorRequiredMixin, CommentQuestionResolutionMixin, DeleteView):
+class CommentDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteSuccessMessageMixin, CommentQuestionResolutionMixin, DeleteView):
     template_name = 'comments/comment_confirm_delete.html'
+    success_message = "Comment deleted successfully."
 
     def form_valid(self, form):
         self.question = self.get_question()

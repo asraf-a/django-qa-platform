@@ -1,6 +1,7 @@
 from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
@@ -8,7 +9,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 
 from app.forms import AnswerCommentForm, AnswerForm, QuestionCommentForm, QuestionForm
 from app.models import Answer, Comment, Question, Tag
-from .mixins import AuthorRequiredMixin, BaseVoteView
+from .mixins import AuthorRequiredMixin, BaseVoteView, DeleteSuccessMessageMixin
 
 
 class QuestionListView(ListView):
@@ -115,10 +116,11 @@ class QuestionDetailView(DetailView):
 
 
 
-class QuestionCreateView(LoginRequiredMixin, CreateView):
+class QuestionCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Question
     form_class = QuestionForm
     template_name = 'questions/question_form.html'
+    success_message = "Question created successfully."
 
     def form_valid(self, form):
         form.instance.author = self.request.user
@@ -128,21 +130,23 @@ class QuestionCreateView(LoginRequiredMixin, CreateView):
         return reverse('app:question_detail', kwargs={'pk': self.object.pk})
 
 
-class QuestionUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
+class QuestionUpdateView(LoginRequiredMixin, AuthorRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Question
     form_class = QuestionForm
     template_name = 'questions/question_edit.html'
     context_object_name = 'question'
+    success_message = "Question updated successfully."
 
     def get_success_url(self):
         return reverse('app:question_detail', kwargs={'pk': self.object.pk})
 
 
-class QuestionDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
+class QuestionDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteSuccessMessageMixin, DeleteView):
     model = Question
     template_name = 'questions/question_confirm_delete.html'
     context_object_name = 'question'
     success_url = reverse_lazy('app:question_list')
+    success_message = "Question deleted successfully."
 
 
 class QuestionVoteView(BaseVoteView):
