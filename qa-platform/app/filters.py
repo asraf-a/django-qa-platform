@@ -1,6 +1,6 @@
 import django_filters
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import IntegerField, OuterRef, Subquery, Sum, Value
+from django.db.models import IntegerField, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 
 from app.models import Question, Vote
@@ -13,12 +13,18 @@ class QuestionFilter(django_filters.FilterSet):
         'unanswered': 'Unanswered',
     }
 
+    q = django_filters.CharFilter(method='filter_search')
     tag = django_filters.CharFilter(method='filter_tags')
     sort = django_filters.CharFilter(method='filter_sort')
 
     class Meta:
         model = Question
-        fields = ['tag', 'sort']
+        fields = ['q', 'tag', 'sort']
+
+    def filter_search(self, queryset, name, value):
+        if value:
+            return queryset.filter(Q(title__icontains=value) | Q(description__icontains=value)).distinct()
+        return queryset
 
     @property
     def current_sort(self):

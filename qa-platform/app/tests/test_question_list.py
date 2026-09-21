@@ -333,3 +333,44 @@ class QuestionListViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context['is_paginated'])
         self.assertContains(response, 'sort=most_voted')
+
+    def test_question_list_search_by_title(self):
+        q1 = Question.objects.create(title='Unique Title Alpha', description='Common description', author=self.user)
+        q2 = Question.objects.create(title='Different Title Beta', description='Common description', author=self.user)
+
+        response = self.client.get(f'{self.url}?q=Alpha')
+        self.assertEqual(response.status_code, 200)
+        questions = list(response.context['questions'])
+        self.assertEqual(questions, [q1])
+        self.assertContains(response, 'Unique Title Alpha')
+        self.assertNotContains(response, 'Different Title Beta')
+
+    def test_question_list_search_by_description(self):
+        q1 = Question.objects.create(title='Title 1', description='Special keyword query', author=self.user)
+        q2 = Question.objects.create(title='Title 2', description='Other details here', author=self.user)
+
+        response = self.client.get(f'{self.url}?q=keyword')
+        self.assertEqual(response.status_code, 200)
+        questions = list(response.context['questions'])
+        self.assertEqual(questions, [q1])
+
+    def test_question_list_search_combined_with_tags_and_sort(self):
+        tag = Tag.objects.create(name='python')
+        ct = ContentType.objects.get_for_model(Question)
+        other_user = User.objects.create_user(username='other', password='password123')
+
+        q1 = Question.objects.create(title='Python Tutorial Low', description='D', author=self.user)
+        q1.tags.add(tag)
+
+        q2 = Question.objects.create(title='Python Tutorial High', description='D', author=self.user)
+        q2.tags.add(tag)
+        Vote.objects.create(user=self.user, content_type=ct, object_id=q2.pk, value=Vote.UPVOTE)
+        Vote.objects.create(user=other_user, content_type=ct, object_id=q2.pk, value=Vote.UPVOTE)
+
+        q_other = Question.objects.create(title='Rust Tutorial High', description='D', author=self.user)
+
+        response = self.client.get(f'{self.url}?q=Tutorial&tag={tag.slug}&sort=most_voted')
+        self.assertEqual(response.status_code, 200)
+        questions = list(response.context['questions'])
+        self.assertEqual(questions, [q2, q1])
+        self.assertNotIn(q_other, questions)

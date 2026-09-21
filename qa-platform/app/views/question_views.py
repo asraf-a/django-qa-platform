@@ -24,6 +24,9 @@ class QuestionListView(FilterView):
 
     def _build_url(self, tags=None, sort=None):
         params = {}
+        q = self.request.GET.get('q')
+        if q:
+            params['q'] = q
         if tags:
             params['tag'] = tags
         if sort and sort != 'newest':
