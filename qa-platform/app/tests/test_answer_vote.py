@@ -196,7 +196,7 @@ class AnswerVoteTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '0 votes')
         self.assertNotContains(response, '-1 vote')
-        self.assertContains(response, 'bg-gray-800')
+        self.assertContains(response, 'userVote: -1')
 
     def test_invalid_vote_value_redirects_without_changing_vote(self):
         self.client.login(username='voter1', password='password123')

@@ -172,8 +172,8 @@ class QuestionVoteTest(TestCase):
         self.assertContains(response, 'aria-label="Upvote question"')
         self.assertContains(response, 'aria-label="Downvote question"')
         self.assertContains(response, '0 votes')
-        self.assertNotContains(response, 'bg-rose-50')
-        self.assertNotContains(response, 'bg-gray-800')
+        self.assertNotContains(response, 'userVote: 1')
+        self.assertNotContains(response, 'userVote: -1')
 
         # Voter1 logs in and upvotes
         self.client.login(username='voter1', password='password123')
@@ -181,7 +181,7 @@ class QuestionVoteTest(TestCase):
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '1 vote')
-        self.assertContains(response, 'bg-rose-50')
+        self.assertContains(response, 'userVote: 1')
         self.assertContains(response, 'text-rose-600')
 
         # Voter1 changes to downvote
@@ -190,7 +190,7 @@ class QuestionVoteTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '0 votes')
         self.assertNotContains(response, '-1 vote')
-        self.assertContains(response, 'bg-gray-800')
+        self.assertContains(response, 'userVote: -1')
 
     def test_invalid_vote_value_redirects_without_changing_vote(self):
         self.client.login(username='voter1', password='password123')
