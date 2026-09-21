@@ -1,14 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %}All Questions - Q&A Platform{% endblock %}
+{% block title %}{% if selected_tags %}Questions tagged {% for tag in selected_tags %}#{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %} - Q&A Platform{% else %}All Questions - Q&A Platform{% endif %}{% endblock %}
 
 {% block content %}
 <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
     <!-- Page Header -->
     <div class="flex items-center justify-between border-b border-gray-200 pb-5 mb-6">
         <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">All Questions</h1>
-            <p class="text-sm text-gray-500 mt-1">Explore questions asked by the community</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                {% if selected_tags %}
+                    Questions tagged with
+                    {% for tag in selected_tags %}
+                        <span class="text-indigo-600">#{{ tag.name }}</span>{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                {% else %}
+                    All Questions
+                {% endif %}
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">
+                {% if selected_tags %}
+                    Showing questions matching selected tags
+                {% else %}
+                    Explore questions asked by the community
+                {% endif %}
+            </p>
         </div>
         <div class="flex items-center gap-3">
             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
@@ -22,6 +37,57 @@
             </a>
         </div>
     </div>
+
+    <!-- Tags Filter Bar -->
+    {% if all_tags %}
+        <div class="mb-6 flex flex-wrap items-center gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-gray-400 mr-1">Tags:</span>
+            <a href="{% url 'app:question_list' %}" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors {% if not selected_tags and not selected_slugs %}bg-indigo-600 text-white shadow-xs{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200{% endif %}">
+                All
+            </a>
+            {% for tag in all_tags %}
+                <a href="{{ tag.toggle_url }}" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors {% if tag.is_selected %}bg-indigo-600 text-white shadow-xs{% else %}bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100{% endif %}">
+                    {% if tag.is_selected %}
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                    {% endif %}
+                    #{{ tag.name }}
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Active Filter Indicator / Reset Link -->
+    {% if selected_tags or selected_slugs %}
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3 bg-indigo-50/60 border border-indigo-100 rounded-xl px-4 py-2.5">
+            <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-indigo-900">
+                <span class="text-indigo-600 font-medium">Filtered by:</span>
+                {% for tag in selected_tags %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-600 text-white shadow-xs">
+                        #{{ tag.name }}
+                        <a href="{{ tag.toggle_url }}" class="hover:text-indigo-200 focus:outline-none transition-colors ml-0.5" title="Remove filter #{{ tag.name }}">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </a>
+                    </span>
+                {% empty %}
+                    {% for slug in selected_slugs %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-600 text-white shadow-xs">
+                            #{{ slug }}
+                        </span>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            <a href="{% url 'app:question_list' %}" class="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Clear all
+            </a>
+        </div>
+    {% endif %}
 
     <!-- Questions Feed -->
     {% if questions %}
@@ -55,12 +121,12 @@
 
                             <!-- Tags & Author Metadata -->
                             <div class="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
-                                <!-- Tags (non-filtering pills) -->
+                                <!-- Tags (filterable pills) -->
                                 <div class="flex flex-wrap items-center gap-1.5">
                                     {% for tag in question.tags.all %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                        <a href="{% url 'app:question_list' %}?tag={{ tag.slug }}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors {% if tag in selected_tags %}bg-indigo-600 text-white border border-indigo-600{% else %}bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100{% endif %}">
                                             #{{ tag.name }}
-                                        </span>
+                                        </a>
                                     {% empty %}
                                         <span class="text-xs text-gray-400 italic">No tags</span>
                                     {% endfor %}
@@ -87,7 +153,7 @@
             <nav class="flex items-center justify-between border-t border-gray-200 pt-6 mt-6" aria-label="Pagination">
                 <div class="flex-1 flex justify-between sm:hidden">
                     {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        <a href="?page={{ page_obj.previous_page_number }}{% for s in selected_slugs %}&tag={{ s }}{% endfor %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                             Previous
                         </a>
                     {% else %}
@@ -96,7 +162,7 @@
                         </span>
                     {% endif %}
                     {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        <a href="?page={{ page_obj.next_page_number }}{% for s in selected_slugs %}&tag={{ s }}{% endfor %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                             Next
                         </a>
                     {% else %}
@@ -113,7 +179,7 @@
                     </div>
                     <div class="inline-flex items-center gap-2">
                         {% if page_obj.has_previous %}
-                            <a href="?page={{ page_obj.previous_page_number }}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            <a href="?page={{ page_obj.previous_page_number }}{% for s in selected_slugs %}&tag={{ s }}{% endfor %}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                                 Previous
                             </a>
                         {% else %}
@@ -125,7 +191,7 @@
                             Page {{ page_obj.number }} of {{ paginator.num_pages }}
                         </span>
                         {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            <a href="?page={{ page_obj.next_page_number }}{% for s in selected_slugs %}&tag={{ s }}{% endfor %}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                                 Next
                             </a>
                         {% else %}
@@ -142,13 +208,32 @@
         <div class="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm">
             <div class="mx-auto w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 mb-4">
                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
             </div>
-            <h3 class="text-lg font-semibold text-gray-900">No questions asked yet</h3>
-            <p class="text-sm text-gray-500 mt-1 max-w-sm mx-auto">
-                There are currently no questions in the community. Check back soon!
-            </p>
+            {% if selected_tags or selected_slugs %}
+                <h3 class="text-lg font-semibold text-gray-900">No questions found</h3>
+                <p class="text-sm text-gray-500 mt-1 max-w-sm mx-auto">
+                    There are no questions matching the selected tag{{ selected_tags|default:selected_slugs|length|pluralize }}:
+                    {% for tag in selected_tags %}
+                        <span class="font-medium text-gray-700">#{{ tag.name }}</span>{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        {% for slug in selected_slugs %}
+                            <span class="font-medium text-gray-700">#{{ slug }}</span>{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    {% endfor %}.
+                </p>
+                <div class="mt-4">
+                    <a href="{% url 'app:question_list' %}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors">
+                        View all questions
+                    </a>
+                </div>
+            {% else %}
+                <h3 class="text-lg font-semibold text-gray-900">No questions asked yet</h3>
+                <p class="text-sm text-gray-500 mt-1 max-w-sm mx-auto">
+                    There are currently no questions in the community. Check back soon!
+                </p>
+            {% endif %}
         </div>
     {% endif %}
 </main>

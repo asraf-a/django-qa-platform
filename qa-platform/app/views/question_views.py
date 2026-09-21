@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
@@ -5,7 +7,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from app.forms import AnswerCommentForm, AnswerForm, QuestionCommentForm, QuestionForm
-from app.models import Answer, Comment, Question
+from app.models import Answer, Comment, Question, Tag
 from .mixins import AuthorRequiredMixin, BaseVoteView
 
 
@@ -16,7 +18,37 @@ class QuestionListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Question.objects.select_related('author').prefetch_related('tags', 'answers', 'votes').all()
+        queryset = (
+            Question.objects
+            .select_related('author')
+            .prefetch_related('tags', 'answers', 'votes')
+        )
+        tags = self.request.GET.getlist('tag')
+        if tags:
+            queryset = queryset.filter(tags__slug__in=tags).distinct()
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        selected_slugs = self.request.GET.getlist('tag')
+        all_tags = list(Tag.objects.all())
+
+        for tag in all_tags:
+            tag.is_selected = tag.slug in selected_slugs
+            if tag.is_selected:
+                remaining = [s for s in selected_slugs if s != tag.slug]
+            else:
+                remaining = selected_slugs + [tag.slug]
+            tag.toggle_url = (
+                f"?{urlencode({'tag': remaining}, doseq=True)}"
+                if remaining
+                else reverse('app:question_list')
+            )
+
+        context['all_tags'] = all_tags
+        context['selected_slugs'] = selected_slugs
+        context['selected_tags'] = [t for t in all_tags if t.is_selected]
+        return context
 
 
 class QuestionDetailView(DetailView):
