@@ -96,10 +96,15 @@ class RegisterViewTest(TestCase):
         self.assertFalse(user.is_staff)
         self.assertFalse(user.is_superuser)
 
-    def test_user_is_not_automatically_logged_in(self):
+    def test_user_is_automatically_logged_in_and_welcome_message_displayed(self):
         response = self.client.post(self.url, self.valid_data, follow=True)
-        # Verify request.user is not authenticated
-        self.assertFalse(response.context['user'].is_authenticated)
+        self.assertTrue(response.context['user'].is_authenticated)
+        self.assertEqual(response.context['user'].username, 'newdeveloper')
+        messages = list(response.context['messages'])
+        self.assertEqual(len(messages), 1)
+        self.assertIn('Welcome to Q&A Platform, newdeveloper!', str(messages[0]))
+        self.assertContains(response, 'Welcome to Q&amp;A Platform, newdeveloper!')
+        self.assertContains(response, 'Your account has been created.')
 
     def test_invalid_registration_does_not_create_user(self):
         data = {
