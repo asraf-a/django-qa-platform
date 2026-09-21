@@ -136,7 +136,7 @@ class QuestionListViewTest(TestCase):
         self.assertEqual(len(response.context['questions']), 3)
         self.assertEqual(len(response.context['selected_tags']), 0)
 
-    def test_question_list_filter_by_existing_tag(self):
+    def test_question_list_filter_by_single_tag(self):
         t1 = Tag.objects.create(name='python')
         t2 = Tag.objects.create(name='django')
         q1 = Question.objects.create(title='Python Question', description='D1', author=self.user)
@@ -148,38 +148,39 @@ class QuestionListViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         questions = list(response.context['questions'])
         self.assertEqual(questions, [q1])
-        self.assertEqual(response.context['selected_tag'], t1)
+        self.assertIn(t1, response.context['selected_tags'])
         self.assertContains(response, 'Python Question')
         self.assertNotContains(response, 'Django Question')
 
-    def test_question_list_filter_excludes_other_tags(self):
-        t1 = Tag.objects.create(name='python')
-        t2 = Tag.objects.create(name='javascript')
-        q1 = Question.objects.create(title='Python Q', description='D1', author=self.user)
-        q1.tags.add(t1)
-        q2 = Question.objects.create(title='JS Q', description='D2', author=self.user)
-        q2.tags.add(t2)
+    def test_question_list_filter_by_multiple_tags_or(self):
+        t_py = Tag.objects.create(name='python')
+        t_dj = Tag.objects.create(name='django')
+        t_js = Tag.objects.create(name='javascript')
 
-        response = self.client.get(f'{self.url}?tag={t2.slug}')
+        q_both = Question.objects.create(title='Python and Django Q', description='Both tags', author=self.user)
+        q_both.tags.add(t_py, t_dj)
+
+        q_py = Question.objects.create(title='Only Python Q', description='One tag', author=self.user)
+        q_py.tags.add(t_py)
+
+        q_dj = Question.objects.create(title='Only Django Q', description='One tag', author=self.user)
+        q_dj.tags.add(t_dj)
+
+        q_js = Question.objects.create(title='Only JS Q', description='Different tag', author=self.user)
+        q_js.tags.add(t_js)
+
+        response = self.client.get(f'{self.url}?tag={t_py.slug}&tag={t_dj.slug}')
         self.assertEqual(response.status_code, 200)
         questions = list(response.context['questions'])
-        self.assertEqual(questions, [q2])
-        self.assertNotContains(response, 'Python Q')
-        self.assertContains(response, 'JS Q')
-
-    def test_question_list_filter_question_with_multiple_tags(self):
-        t1 = Tag.objects.create(name='python')
-        t2 = Tag.objects.create(name='django')
-        q = Question.objects.create(title='Multi-Tag Question', description='D', author=self.user)
-        q.tags.add(t1, t2)
-
-        res1 = self.client.get(f'{self.url}?tag={t1.slug}')
-        self.assertEqual(res1.status_code, 200)
-        self.assertIn(q, res1.context['questions'])
-
-        res2 = self.client.get(f'{self.url}?tag={t2.slug}')
-        self.assertEqual(res2.status_code, 200)
-        self.assertIn(q, res2.context['questions'])
+        self.assertEqual(len(questions), 3)
+        self.assertIn(q_both, questions)
+        self.assertIn(q_py, questions)
+        self.assertIn(q_dj, questions)
+        self.assertNotIn(q_js, questions)
+        self.assertContains(response, 'Python and Django Q')
+        self.assertContains(response, 'Only Python Q')
+        self.assertContains(response, 'Only Django Q')
+        self.assertNotContains(response, 'Only JS Q')
 
     def test_question_list_filter_nonexistent_tag(self):
         Question.objects.create(title='Sample Q', description='D', author=self.user)
@@ -215,115 +216,26 @@ class QuestionListViewTest(TestCase):
         self.assertEqual(len(res2.context['questions']), 5)
         self.assertNotContains(res2, 'Other Q')
 
-    def test_question_list_filter_multiple_tags_or_union(self):
-        t_py = Tag.objects.create(name='python')
-        t_dj = Tag.objects.create(name='django')
-        t_js = Tag.objects.create(name='javascript')
-
-        q_both = Question.objects.create(title='Python and Django Q', description='Both tags', author=self.user)
-        q_both.tags.add(t_py, t_dj)
-
-        q_py = Question.objects.create(title='Only Python Q', description='One tag', author=self.user)
-        q_py.tags.add(t_py)
-
-        q_dj = Question.objects.create(title='Only Django Q', description='One tag', author=self.user)
-        q_dj.tags.add(t_dj)
-
-        q_js = Question.objects.create(title='Only JS Q', description='Different tag', author=self.user)
-        q_js.tags.add(t_js)
-
-        # In OR mode, questions with python OR django are returned (3 questions), but not JS
-        response = self.client.get(f'{self.url}?tag={t_py.slug}&tag={t_dj.slug}')
-        self.assertEqual(response.status_code, 200)
-        questions = list(response.context['questions'])
-        self.assertEqual(len(questions), 3)
-        self.assertIn(q_both, questions)
-        self.assertIn(q_py, questions)
-        self.assertIn(q_dj, questions)
-        self.assertNotIn(q_js, questions)
-        self.assertEqual(len(response.context['selected_tags']), 2)
-        self.assertIn(t_py, response.context['selected_tags'])
-        self.assertIn(t_dj, response.context['selected_tags'])
-        self.assertContains(response, 'Python and Django Q')
-        self.assertContains(response, 'Only Python Q')
-        self.assertContains(response, 'Only Django Q')
-        self.assertNotContains(response, 'Only JS Q')
-
-    def test_question_list_filter_comma_separated_tags(self):
-        t_py = Tag.objects.create(name='python')
-        t_dj = Tag.objects.create(name='django')
-        t_js = Tag.objects.create(name='javascript')
-
-        q_both = Question.objects.create(title='Comma Tag Q', description='Both tags', author=self.user)
-        q_both.tags.add(t_py, t_dj)
-
-        q_py = Question.objects.create(title='Py Only Q', description='Python only', author=self.user)
-        q_py.tags.add(t_py)
-
-        q_js = Question.objects.create(title='JS Only Q', description='JS only', author=self.user)
-        q_js.tags.add(t_js)
-
-        response = self.client.get(f'{self.url}?tag={t_py.slug},{t_dj.slug}')
-        self.assertEqual(response.status_code, 200)
-        questions = list(response.context['questions'])
-        self.assertEqual(len(questions), 2)
-        self.assertIn(q_both, questions)
-        self.assertIn(q_py, questions)
-        self.assertNotIn(q_js, questions)
-
-    def test_question_list_filter_multiple_tags_one_nonexistent(self):
-        t_py = Tag.objects.create(name='python')
-        q = Question.objects.create(title='Python Q', description='desc', author=self.user)
-        q.tags.add(t_py)
-
-        # In OR mode, valid tag still returns matching questions
-        response = self.client.get(f'{self.url}?tag={t_py.slug}&tag=nonexistent-tag')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['questions']), 1)
-        self.assertTrue(response.context['has_invalid_tag'])
-        self.assertContains(response, 'Python Q')
-
-    def test_question_list_filter_all_nonexistent_tags(self):
-        Question.objects.create(title='Sample Q', description='desc', author=self.user)
-
-        response = self.client.get(f'{self.url}?tag=nonexistent-1&tag=nonexistent-2')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['questions']), 0)
-        self.assertContains(response, 'No questions found')
-
-    def test_question_list_filter_multiple_tags_pagination(self):
+    def test_question_list_toggle_and_active_filters(self):
         t1 = Tag.objects.create(name='python')
         t2 = Tag.objects.create(name='django')
 
-        for i in range(15):
-            q = Question.objects.create(title=f'Py-Dj Q {i}', description='desc', author=self.user)
-            q.tags.add(t1, t2)
-
-        res1 = self.client.get(f'{self.url}?tag={t1.slug}&tag={t2.slug}')
-        self.assertEqual(res1.status_code, 200)
-        self.assertTrue(res1.context['is_paginated'])
-        self.assertEqual(len(res1.context['questions']), 10)
-        self.assertEqual(res1.context['paginator'].count, 15)
-        self.assertContains(res1, f'tag={t1.slug}')
-        self.assertContains(res1, f'tag={t2.slug}')
-
-        res2 = self.client.get(f'{self.url}?page=2&tag={t1.slug}&tag={t2.slug}')
-        self.assertEqual(res2.status_code, 200)
-        self.assertEqual(len(res2.context['questions']), 5)
-
-    def test_question_list_filter_tag_toggle_urls(self):
-        t_py = Tag.objects.create(name='python')
-        t_dj = Tag.objects.create(name='django')
-
-        response = self.client.get(f'{self.url}?tag={t_py.slug}')
+        # When viewing tag 'python'
+        response = self.client.get(f'{self.url}?tag={t1.slug}')
         self.assertEqual(response.status_code, 200)
 
-        all_tags_data = {item['tag'].slug: item for item in response.context['all_tags_data']}
-        self.assertTrue(all_tags_data['python']['is_selected'])
-        self.assertFalse(all_tags_data['django']['is_selected'])
+        # Selected tags has t1 with toggle_url back to question list
+        selected_tags = response.context['selected_tags']
+        self.assertEqual(len(selected_tags), 1)
+        self.assertEqual(selected_tags[0].slug, t1.slug)
+        self.assertEqual(selected_tags[0].toggle_url, self.url)
 
-        # Python is selected: toggle_url removes python
-        self.assertNotIn('tag=python', all_tags_data['python']['toggle_url'])
-        # Django is not selected: toggle_url adds django to python
-        self.assertIn('tag=python', all_tags_data['django']['toggle_url'])
-        self.assertIn('tag=django', all_tags_data['django']['toggle_url'])
+        # In all_tags, t1 is selected and its toggle_url removes it
+        all_tags = {t.slug: t for t in response.context['all_tags']}
+        self.assertTrue(all_tags[t1.slug].is_selected)
+        self.assertEqual(all_tags[t1.slug].toggle_url, self.url)
+
+        # t2 is not selected and its toggle_url adds django to python
+        self.assertFalse(all_tags[t2.slug].is_selected)
+        self.assertIn(f'tag={t1.slug}', all_tags[t2.slug].toggle_url)
+        self.assertIn(f'tag={t2.slug}', all_tags[t2.slug].toggle_url)

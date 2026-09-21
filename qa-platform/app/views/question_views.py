@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
@@ -15,98 +17,37 @@ class QuestionListView(ListView):
     context_object_name = 'questions'
     paginate_by = 10
 
-    def _get_requested_tag_slugs(self):
-        raw_tags = self.request.GET.getlist('tag')
-        tag_slugs = []
-        for item in raw_tags:
-            for t in item.split(','):
-                t = t.strip()
-                if t and t not in tag_slugs:
-                    tag_slugs.append(t)
-        return tag_slugs
-
-    def _get_selected_tags(self):
-        if not hasattr(self, '_cached_selected_tags'):
-            tag_slugs = self._get_requested_tag_slugs()
-            selected_tags = []
-            has_invalid_tag = False
-            for slug in tag_slugs:
-                tag = Tag.objects.filter(slug=slug).first() or Tag.objects.filter(name__iexact=slug).first()
-                if tag:
-                    if tag not in selected_tags:
-                        selected_tags.append(tag)
-                else:
-                    has_invalid_tag = True
-            self._cached_selected_tags = selected_tags
-            self._cached_has_invalid_tag = has_invalid_tag
-        return self._cached_selected_tags, self._cached_has_invalid_tag
-
     def get_queryset(self):
-        queryset = Question.objects.select_related('author').prefetch_related('tags', 'answers', 'votes').all()
-        selected_tags, has_invalid_tag = self._get_selected_tags()
-        tag_slugs = self._get_requested_tag_slugs()
-        if tag_slugs and not selected_tags:
-            return queryset.none()
-        if selected_tags:
-            queryset = queryset.filter(tags__in=selected_tags).distinct()
+        queryset = (
+            Question.objects
+            .select_related('author')
+            .prefetch_related('tags', 'answers', 'votes')
+        )
+        tags = self.request.GET.getlist('tag')
+        if tags:
+            queryset = queryset.filter(tags__slug__in=tags).distinct()
         return queryset
-
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        selected_tags, has_invalid_tag = self._get_selected_tags()
-        tag_slugs = self._get_requested_tag_slugs()
-
-        tag_query_string = ''.join(f'&tag={s}' for s in tag_slugs)
+        selected_slugs = self.request.GET.getlist('tag')
         all_tags = list(Tag.objects.all())
-        selected_slugs_set = {t.slug for t in selected_tags}
 
-        all_tags_data = []
         for tag in all_tags:
-            if tag.slug in selected_slugs_set:
-                remaining = [s for s in tag_slugs if s != tag.slug and s.lower() != tag.name.lower()]
-                toggle_url = ('?' + '&'.join(f'tag={s}' for s in remaining)) if remaining else '?'
-                is_selected = True
+            tag.is_selected = tag.slug in selected_slugs
+            if tag.is_selected:
+                remaining = [s for s in selected_slugs if s != tag.slug]
             else:
-                new_slugs = tag_slugs + [tag.slug]
-                toggle_url = '?' + '&'.join(f'tag={s}' for s in new_slugs)
-                is_selected = False
-            all_tags_data.append({
-                'tag': tag,
-                'is_selected': is_selected,
-                'toggle_url': toggle_url,
-            })
+                remaining = selected_slugs + [tag.slug]
+            tag.toggle_url = (
+                f"?{urlencode({'tag': remaining}, doseq=True)}"
+                if remaining
+                else reverse('app:question_list')
+            )
 
-        active_filters = []
-        for tag in selected_tags:
-            remaining = [s for s in tag_slugs if s != tag.slug and s.lower() != tag.name.lower()]
-            remove_url = ('?' + '&'.join(f'tag={s}' for s in remaining)) if remaining else '?'
-            active_filters.append({
-                'name': tag.name,
-                'slug': tag.slug,
-                'remove_url': remove_url,
-                'is_valid': True,
-            })
-        for slug in tag_slugs:
-            if not any(t.slug == slug or t.name.lower() == slug.lower() for t in selected_tags):
-                remaining = [s for s in tag_slugs if s != slug]
-                remove_url = ('?' + '&'.join(f'tag={s}' for s in remaining)) if remaining else '?'
-                active_filters.append({
-                    'name': slug,
-                    'slug': slug,
-                    'remove_url': remove_url,
-                    'is_valid': False,
-                })
-
-        context['selected_tags'] = selected_tags
-        context['selected_tag'] = selected_tags[0] if len(selected_tags) == 1 else None
-        context['tag_param'] = tag_slugs[0] if tag_slugs else ''
-        context['tag_slugs'] = tag_slugs
-        context['tag_query_string'] = tag_query_string
-        context['all_tags_data'] = all_tags_data
         context['all_tags'] = all_tags
-        context['active_filters'] = active_filters
-        context['has_invalid_tag'] = has_invalid_tag
+        context['selected_slugs'] = selected_slugs
+        context['selected_tags'] = [t for t in all_tags if t.is_selected]
         return context
 
 
