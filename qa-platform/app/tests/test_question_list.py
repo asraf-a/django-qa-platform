@@ -3,6 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from django.urls import reverse
 from django.views.generic import ListView
+from django_filters.views import FilterView
 
 from app.models import Answer, Question, Tag, Vote
 from app.views import QuestionListView
@@ -16,7 +17,7 @@ class QuestionListViewTest(TestCase):
         self.url = reverse('app:question_list')
 
     def test_view_is_class_based(self):
-        self.assertTrue(issubclass(QuestionListView, ListView))
+        self.assertTrue(issubclass(QuestionListView, (ListView, FilterView)))
 
     def test_question_list_status_code_by_name(self):
         response = self.client.get(self.url)
@@ -239,3 +240,96 @@ class QuestionListViewTest(TestCase):
         self.assertFalse(all_tags[t2.slug].is_selected)
         self.assertIn(f'tag={t1.slug}', all_tags[t2.slug].toggle_url)
         self.assertIn(f'tag={t2.slug}', all_tags[t2.slug].toggle_url)
+
+    def test_question_list_sort_newest(self):
+        q1 = Question.objects.create(title='Old Question', description='D', author=self.user)
+        q2 = Question.objects.create(title='New Question', description='D', author=self.user)
+
+        # Default (no sort param)
+        res_default = self.client.get(self.url)
+        self.assertEqual(list(res_default.context['questions']), [q2, q1])
+        self.assertEqual(res_default.context['current_sort'], 'newest')
+
+        # Explicit ?sort=newest
+        res_newest = self.client.get(f'{self.url}?sort=newest')
+        self.assertEqual(list(res_newest.context['questions']), [q2, q1])
+
+        # Invalid sort falls back to newest
+        res_invalid = self.client.get(f'{self.url}?sort=invalid')
+        self.assertEqual(list(res_invalid.context['questions']), [q2, q1])
+        self.assertEqual(res_invalid.context['current_sort'], 'newest')
+
+    def test_question_list_sort_most_voted(self):
+        ct = ContentType.objects.get_for_model(Question)
+        other_user = User.objects.create_user(username='voter2', password='password123')
+
+        q_zero = Question.objects.create(title='Zero Votes Q', description='D', author=self.user)
+        q_high = Question.objects.create(title='High Votes Q', description='D', author=self.user)
+        q_negative = Question.objects.create(title='Negative Votes Q', description='D', author=self.user)
+
+        # Upvotes for q_high (+2)
+        Vote.objects.create(user=self.user, content_type=ct, object_id=q_high.pk, value=Vote.UPVOTE)
+        Vote.objects.create(user=other_user, content_type=ct, object_id=q_high.pk, value=Vote.UPVOTE)
+
+        # Downvote for q_negative (-1)
+        Vote.objects.create(user=self.user, content_type=ct, object_id=q_negative.pk, value=Vote.DOWNVOTE)
+
+        response = self.client.get(f'{self.url}?sort=most_voted')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['current_sort'], 'most_voted')
+        questions = list(response.context['questions'])
+        self.assertEqual(questions, [q_high, q_zero, q_negative])
+
+    def test_question_list_sort_unanswered(self):
+        q_answered = Question.objects.create(title='Answered Q', description='D', author=self.user)
+        Answer.objects.create(question=q_answered, author=self.user, content='Some answer')
+
+        q_unanswered = Question.objects.create(title='Unanswered Q', description='D', author=self.user)
+
+        response = self.client.get(f'{self.url}?sort=unanswered')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['current_sort'], 'unanswered')
+        questions = list(response.context['questions'])
+        self.assertEqual(questions, [q_unanswered])
+        self.assertContains(response, 'Unanswered Q')
+        self.assertNotContains(response, 'Answered Q')
+
+        # Empty state when all questions have answers
+        q_unanswered.delete()
+        res_empty = self.client.get(f'{self.url}?sort=unanswered')
+        self.assertEqual(len(res_empty.context['questions']), 0)
+        self.assertContains(res_empty, 'No unanswered questions')
+
+    def test_question_list_sort_combined_with_tags(self):
+        t1 = Tag.objects.create(name='django')
+        t2 = Tag.objects.create(name='python')
+        ct = ContentType.objects.get_for_model(Question)
+
+        q1 = Question.objects.create(title='Django Low Q', description='D', author=self.user)
+        q1.tags.add(t1)
+
+        q2 = Question.objects.create(title='Django High Q', description='D', author=self.user)
+        q2.tags.add(t1, t2)
+        Vote.objects.create(user=self.user, content_type=ct, object_id=q2.pk, value=Vote.UPVOTE)
+
+        q3 = Question.objects.create(title='Python Only Q', description='D', author=self.user)
+        q3.tags.add(t2)
+
+        response = self.client.get(f'{self.url}?tag={t1.slug}&sort=most_voted')
+        self.assertEqual(response.status_code, 200)
+        questions = list(response.context['questions'])
+        self.assertEqual(questions, [q2, q1])
+
+        # Verify sort_tabs preserve tag param
+        sort_tabs = {tab['key']: tab for tab in response.context['sort_tabs']}
+        self.assertTrue(sort_tabs['most_voted']['is_active'])
+        self.assertIn(f'tag={t1.slug}', sort_tabs['newest']['url'])
+
+    def test_question_list_sort_pagination_preserves_sort(self):
+        for i in range(15):
+            Question.objects.create(title=f'Q {i}', description='D', author=self.user)
+
+        response = self.client.get(f'{self.url}?sort=most_voted')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['is_paginated'])
+        self.assertContains(response, 'sort=most_voted')

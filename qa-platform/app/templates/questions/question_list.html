@@ -42,7 +42,7 @@
     {% if all_tags %}
         <div class="mb-6 flex flex-wrap items-center gap-2">
             <span class="text-xs font-semibold uppercase tracking-wider text-gray-400 mr-1">Tags:</span>
-            <a href="{% url 'app:question_list' %}" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors {% if not selected_tags and not selected_slugs %}bg-indigo-600 text-white shadow-xs{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200{% endif %}">
+            <a href="{{ all_tags_url }}" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors {% if not selected_tags and not selected_slugs %}bg-indigo-600 text-white shadow-xs{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200{% endif %}">
                 All
             </a>
             {% for tag in all_tags %}
@@ -80,7 +80,7 @@
                     {% endfor %}
                 {% endfor %}
             </div>
-            <a href="{% url 'app:question_list' %}" class="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+            <a href="{{ all_tags_url }}" class="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -88,6 +88,40 @@
             </a>
         </div>
     {% endif %}
+
+    <!-- Sort Controls Bar -->
+    <div class="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200 pb-3">
+        <div class="inline-flex items-center gap-1 bg-gray-100/80 p-1 rounded-xl text-xs sm:text-sm font-medium w-fit">
+            {% for tab in sort_tabs %}
+                <a href="{{ tab.url }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-150 {% if tab.is_active %}bg-white text-indigo-700 font-semibold shadow-xs{% else %}text-gray-600 hover:text-gray-900 hover:bg-white/50{% endif %}">
+                    {% if tab.key == 'newest' %}
+                        <svg class="w-3.5 h-3.5 {% if tab.is_active %}text-indigo-600{% else %}text-gray-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    {% elif tab.key == 'most_voted' %}
+                        <svg class="w-3.5 h-3.5 {% if tab.is_active %}text-indigo-600{% else %}text-gray-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    {% elif tab.key == 'unanswered' %}
+                        <svg class="w-3.5 h-3.5 {% if tab.is_active %}text-indigo-600{% else %}text-gray-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    {% endif %}
+                    {{ tab.label }}
+                </a>
+            {% endfor %}
+        </div>
+        <div class="text-xs text-gray-500">
+            {% if current_sort == 'most_voted' %}
+                Sorted by highest score
+            {% elif current_sort == 'unanswered' %}
+                Questions awaiting answers
+            {% else %}
+                Sorted by newest
+            {% endif %}
+        </div>
+    </div>
 
     <!-- Questions Feed -->
     {% if questions %}
@@ -179,7 +213,7 @@
                     </div>
                     <div class="inline-flex items-center gap-2">
                         {% if page_obj.has_previous %}
-                            <a href="?page={{ page_obj.previous_page_number }}{% for s in selected_slugs %}&tag={{ s }}{% endfor %}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            <a href="?page={{ page_obj.previous_page_number }}{% for s in selected_slugs %}&tag={{ s }}{% endfor %}{% if current_sort != 'newest' %}&sort={{ current_sort }}{% endif %}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                                 Previous
                             </a>
                         {% else %}
@@ -191,7 +225,7 @@
                             Page {{ page_obj.number }} of {{ paginator.num_pages }}
                         </span>
                         {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}{% for s in selected_slugs %}&tag={{ s }}{% endfor %}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            <a href="?page={{ page_obj.next_page_number }}{% for s in selected_slugs %}&tag={{ s }}{% endfor %}{% if current_sort != 'newest' %}&sort={{ current_sort }}{% endif %}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                                 Next
                             </a>
                         {% else %}
@@ -211,7 +245,17 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
             </div>
-            {% if selected_tags or selected_slugs %}
+            {% if current_sort == 'unanswered' %}
+                <h3 class="text-lg font-semibold text-gray-900">No unanswered questions</h3>
+                <p class="text-sm text-gray-500 mt-1 max-w-sm mx-auto">
+                    Great! All questions{% if selected_tags %} with the selected tags{% endif %} currently have at least one answer.
+                </p>
+                <div class="mt-4">
+                    <a href="{% url 'app:question_list' %}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors">
+                        View all questions
+                    </a>
+                </div>
+            {% elif selected_tags or selected_slugs %}
                 <h3 class="text-lg font-semibold text-gray-900">No questions found</h3>
                 <p class="text-sm text-gray-500 mt-1 max-w-sm mx-auto">
                     There are no questions matching the selected tag{{ selected_tags|default:selected_slugs|length|pluralize }}:
