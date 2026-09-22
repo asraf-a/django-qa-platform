@@ -4,10 +4,10 @@
         <div class="space-y-2 bg-gray-50/70 border border-gray-100 rounded-lg p-2.5 sm:p-3">
             {% for comment in question.comments.all %}
                 {% if comment.is_root_comment %}
-                    <div id="comment-{{ comment.pk }}" class="scroll-mt-20 text-xs text-gray-700 py-2 border-b border-gray-50 last:border-0">
+                    <div id="comment-{{ comment.pk }}" class="scroll-mt-20 text-sm text-gray-700 py-2.5 border-b border-gray-50 last:border-0">
                         <div class="flex items-baseline justify-between gap-2">
                             <span id="comment-content-{{ comment.pk }}" class="break-words leading-relaxed">{{ comment.content }}</span>
-                            <span class="text-[11px] text-gray-400 shrink-0 inline-flex items-center gap-2">
+                            <span class="text-xs text-gray-500 shrink-0 inline-flex items-center gap-2">
                                 {% include "comments/comment_vote_buttons.html" with comment=comment %}
                                 <span>
                                     <span class="text-indigo-600 font-medium">{{ comment.author.username }}</span>
@@ -24,7 +24,7 @@
                                     rows="2"
                                     required
                                     placeholder="Edit your comment..."
-                                    class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-400 resize-y"
+                                    class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-400 resize-y"
                                 >{{ comment.content }}</textarea>
                                 <div class="flex items-center justify-end gap-2">
                                     <button
@@ -48,10 +48,10 @@
                         {% if comment.replies.all %}
                             <div class="mt-2 ml-4 pl-3 border-l-2 border-indigo-100 space-y-1.5">
                                 {% for reply in comment.replies.all %}
-                                    <div id="comment-{{ reply.pk }}" class="scroll-mt-20 text-xs text-gray-600">
+                                    <div id="comment-{{ reply.pk }}" class="scroll-mt-20 text-sm text-gray-600">
                                         <div class="flex items-baseline justify-between gap-2">
                                             <span id="comment-content-{{ reply.pk }}" class="break-words leading-relaxed">{{ reply.content }}</span>
-                                            <span class="text-[11px] text-gray-400 shrink-0 inline-flex items-center gap-2">
+                                            <span class="text-xs text-gray-500 shrink-0 inline-flex items-center gap-2">
                                                 {% include "comments/comment_vote_buttons.html" with comment=reply %}
                                                 <span>
                                                     <span class="text-indigo-600 font-medium">{{ reply.author.username }}</span>
@@ -106,7 +106,7 @@
                                                     rows="2"
                                                     required
                                                     placeholder="Edit your reply..."
-                                                    class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-400 resize-y"
+                                                    class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-400 resize-y"
                                                 >{{ reply.content }}</textarea>
                                                 <div class="flex items-center justify-end gap-2">
                                                     <button
@@ -135,24 +135,24 @@
                                 <button
                                     type="button"
                                     onclick="document.getElementById('reply-form-{{ comment.pk }}').classList.toggle('hidden')"
-                                    class="text-[11px] text-gray-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                                    class="text-xs text-gray-500 hover:text-indigo-600 transition-colors cursor-pointer"
                                 >
                                     Reply
                                 </button>
                                 {% if user == comment.author %}
-                                    <span class="text-[11px] text-gray-300">·</span>
+                                    <span class="text-xs text-gray-300">·</span>
                                     <button
                                         type="button"
                                         onclick="toggleCommentEdit('{{ comment.pk }}')"
-                                        class="text-[11px] text-gray-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                                        class="text-xs text-gray-500 hover:text-indigo-600 transition-colors cursor-pointer"
                                     >
                                         Edit
                                     </button>
-                                    <span class="text-[11px] text-gray-300">·</span>
+                                    <span class="text-xs text-gray-300">·</span>
                                     <button
                                         type="button"
                                         onclick="document.getElementById('delete-comment-modal-{{ comment.pk }}').showModal()"
-                                        class="text-[11px] text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                                        class="text-xs text-gray-500 hover:text-red-600 transition-colors cursor-pointer"
                                     >
                                         Delete
                                     </button>
@@ -200,7 +200,7 @@
                                         rows="2"
                                         required
                                         placeholder="Reply to {{ comment.author.username }}..."
-                                        class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-400 resize-y"
+                                        class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-400 resize-y"
                                     ></textarea>
                                     <div class="flex items-center justify-end gap-2">
                                         <button
@@ -233,7 +233,7 @@
                 type="button"
                 x-show="!show"
                 @click="show = true; $nextTick(() => $refs.commentInput?.focus())"
-                class="text-xs font-medium text-gray-500 hover:text-indigo-600 transition-colors cursor-pointer py-1"
+                class="text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors cursor-pointer py-1"
             >
                 + Add a comment
             </button>
