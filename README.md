@@ -58,9 +58,14 @@ django-qa-platform/
 pip install -r requirements.txt
 ```
 
-### 3. Run Development Server
+### 3. Apply Database Migrations
 ```bash
 cd qa-platform
+python manage.py migrate
+```
+
+### 4. Run Development Server
+```bash
 python manage.py runserver
 ```
 Visit `http://127.0.0.1:8000/` in your browser.
