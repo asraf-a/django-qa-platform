@@ -88,3 +88,22 @@ document.addEventListener('alpine:init', registerVoteWidget);
 if (typeof Alpine !== 'undefined') {
     registerVoteWidget();
 }
+
+/**
+ * Preserve and restore scroll position across form submissions and page reloads
+ */
+document.addEventListener('submit', function (e) {
+    sessionStorage.setItem('scroll_pos', String(window.scrollY));
+});
+
+(function restoreScroll() {
+    const scrollPos = sessionStorage.getItem('scroll_pos');
+    if (scrollPos !== null) {
+        sessionStorage.removeItem('scroll_pos');
+        const pos = Number(scrollPos);
+        const restore = () => window.scrollTo({ top: pos, behavior: 'instant' });
+        restore();
+        window.addEventListener('DOMContentLoaded', restore);
+        window.addEventListener('load', restore);
+    }
+})();
